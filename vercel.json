@@ -1,3 +1,7 @@
 {
-  "framework": "nextjs"
+  "functions": {
+    "api/claude.js": {
+      "runtime": "edge"
+    }
+  }
 }
