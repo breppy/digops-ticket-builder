@@ -423,8 +423,9 @@ const PROJECTS=[
 let state={
   apiKey:'',ticketType:'',resolvedType:'',
   fields:{},aiFollowups:{},
-  rewrittenTicket:null,  // standardized ticket object from Claude
+  rewrittenTicket:null,
   pendingQuestions:'',submitStatus:'Not Started',
+  reviewCount:0,
   clarifyRecordId:'',clarifyOriginalDesc:'',
   clarifyPendingQuestions:'',clarifyAnswers:{},
   isReeval:false
@@ -769,44 +770,78 @@ function renderRewriteResults(result){
 
   const hasErrors=issues.some(i=>i.severity==='error');
   const hasFollowups=questions.length>0;
+  const isSpike=(state.resolvedType||state.ticketType)==='Spike';
+  const isReeval=state.reviewCount>0;
 
-  if(hasErrors){
-    const pqText=state.pendingQuestions||'Some required information is still missing.';
-    pendingContainer.innerHTML=`<hr class="divider"><div class="pending-q-panel"><div class="pending-q-label">🔒 Still Unresolved</div><div class="pending-q-body">${pqText}</div></div>`;
+  // Build the open questions text from all unresolved items
+  const openQText=state.pendingQuestions||
+    issues.filter(i=>i.severity==='error').map(i=>i.message).join(' | ')||
+    'Some information is still missing.';
 
-    if(hasFollowups){
-      // Primary action: re-review with the answers typed above
-      btnRow.innerHTML=`
-        <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
-        <button class="btn btn-primary" onclick="reReviewWithAnswers()">Re-Review with Answers →</button>
-        <button class="btn btn-draft" onclick="goToStep(4,'Draft')" style="margin-left:auto;">Save as Draft</button>`;
-    } else {
-      btnRow.innerHTML=`
-        <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
-        <button class="btn btn-clarification" onclick="goToStep(4,'Needs Clarification')">Save — Needs Clarification</button>
-        <button class="btn btn-draft" onclick="goToStep(4,'Draft')">Save as Draft</button>`;
-    }
-  } else {
+  if(!hasErrors){
+    // STATE 1 — READY
     pendingContainer.innerHTML='';
+    issuesContainer.innerHTML=(issuesContainer.innerHTML||'').replace(
+      /Issues Found/,'Issues Found'
+    );
     btnRow.innerHTML=`
       <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
       <button class="btn btn-primary" onclick="goToStep(4)">Review & Submit →</button>`;
+
+  } else if(isSpike){
+    // STATE 2 — SPIKE: open questions are the work, not a blocker
+    pendingContainer.innerHTML=`
+      <hr class="divider">
+      <div class="pending-q-panel" style="background:var(--blue-light);border-color:rgba(26,86,176,0.2);">
+        <div class="pending-q-label" style="color:var(--blue-accent);">📋 Open Questions</div>
+        <div class="pending-q-body">These will be logged as open questions on the spike — that's expected. The spike exists to answer them.<br><br><em>${openQText}</em></div>
+      </div>`;
+    state.pendingQuestions=openQText;
+    btnRow.innerHTML=`
+      <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
+      ${hasFollowups&&!isReeval?`<button class="btn btn-ghost" onclick="reReviewWithAnswers()">Re-Review with Answers</button>`:''}
+      <button class="btn btn-primary" onclick="goToStep(4,'Open Questions')">File Spike with Open Questions →</button>`;
+
+  } else if(isReeval){
+    // STATE 3 — NEEDS CLARIFICATION (after one re-review, stop the loop)
+    pendingContainer.innerHTML=`
+      <hr class="divider">
+      <div class="pending-q-panel">
+        <div class="pending-q-label">🔒 Needs Clarification</div>
+        <div class="pending-q-body">Some information still needs to be confirmed before this can be worked on. File it now — the open questions will be logged so nothing gets lost.<br><br><em>${openQText}</em></div>
+      </div>`;
+    state.pendingQuestions=openQText;
+    btnRow.innerHTML=`
+      <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
+      <button class="btn btn-clarification" onclick="goToStep(4,'Needs Clarification')">File — Needs Clarification</button>
+      <button class="btn btn-draft" onclick="goToStep(4,'Draft')">Save as Draft</button>`;
+
+  } else {
+    // FIRST PASS with errors — offer one re-review
+    pendingContainer.innerHTML=`
+      <hr class="divider">
+      <div class="pending-q-panel">
+        <div class="pending-q-label">🔒 Still Unresolved</div>
+        <div class="pending-q-body">Answer the questions above and hit Re-Review — or file now with the questions logged.</div>
+      </div>`;
+    btnRow.innerHTML=`
+      <button class="btn btn-ghost" onclick="goToStep(2)">← Back & Edit</button>
+      ${hasFollowups?`<button class="btn btn-primary" onclick="reReviewWithAnswers()">Re-Review with Answers →</button>`:''}
+      <button class="btn btn-clarification" onclick="goToStep(4,'Needs Clarification')" style="${hasFollowups?'':'margin-left:auto;'}">File — Needs Clarification</button>
+      <button class="btn btn-draft" onclick="goToStep(4,'Draft')">Save as Draft</button>`;
   }
 }
 
 function reReviewWithAnswers(){
-  // Collect all followup answers from the DOM before re-running
+  // Collect all followup answers from the DOM
   document.querySelectorAll('[id^="fu-"]').forEach(el=>{
-    // The onchange already synced to state.fields, but grab current value too
     const rawId=el.id.replace('fu-','');
     if(el.value){
       state.aiFollowups[rawId]=el.value;
-      // Append answer to the relevant field or notes so Claude sees it in context
       const existing=state.fields[rawId]||'';
       state.fields[rawId]=existing?`${existing}\n\nAdditional context: ${el.value}`:el.value;
     }
   });
-  // Also merge all followup answers into a combined notes append so nothing is lost
   const allAnswers=Object.entries(state.aiFollowups)
     .filter(([,v])=>v)
     .map(([k,v])=>`${k}: ${v}`)
@@ -814,7 +849,8 @@ function reReviewWithAnswers(){
   if(allAnswers){
     state.fields['notes']=(state.fields['notes']?state.fields['notes']+'\n\n':'')+'Follow-up answers:\n'+allAnswers;
   }
-  // Re-run the full rewrite+review in place — no navigation
+  // Track that we've done one re-review — caps the loop
+  state.reviewCount=(state.reviewCount||0)+1;
   runAIRewrite();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -861,8 +897,8 @@ function renderPreview(status){
   const s=state.submitStatus;
 
   const chipMap={'Feature Request':'chip-feature','Bug':'chip-bug','Spike':'chip-spike','Task':'chip-task','Unknown':'chip-draft'};
-  const statusChip=s==='Draft'?'chip-draft':s==='Needs Clarification'?'chip-needs-clarification':'';
-  const sub=s==='Draft'?'This ticket will be saved as a <strong>Draft</strong>.':s==='Needs Clarification'?'This ticket will be filed as <strong>Needs Clarification</strong> — pending questions logged.':'This is what will be created in Airtable.';
+  const statusChip=s==='Draft'?'chip-draft':s==='Needs Clarification'?'chip-needs-clarification':s==='Open Questions'?'chip-spike':'';
+  const sub=s==='Draft'?'This ticket will be saved as a <strong>Draft</strong>.':s==='Needs Clarification'?'This ticket will be filed as <strong>Needs Clarification</strong> — pending questions logged.':s==='Open Questions'?'This spike will be filed with <strong>Open Questions</strong> logged — that\'s expected and fine.':'This is what will be created in Airtable.';
   document.getElementById('step4-sub').innerHTML=sub;
 
   const title=(r?r.title:null)||f['task-name']||'(no title)';
@@ -881,10 +917,10 @@ function renderPreview(status){
   } else {
     fieldsHtml+=stdField('Description',f.description||'(no description)');
   }
-  if(state.pendingQuestions&&s==='Needs Clarification') fieldsHtml+=`<div class="std-field"><div class="std-field-label" style="color:var(--amber);">⚠ Pending Questions</div><div class="std-field-value" style="color:var(--amber);">${state.pendingQuestions}</div></div>`;
+  if(state.pendingQuestions&&(s==='Needs Clarification'||s==='Open Questions')) fieldsHtml+=`<div class="std-field"><div class="std-field-label" style="color:${s==='Open Questions'?'var(--blue-accent)':'var(--amber)'};">${s==='Open Questions'?'📋 Open Questions':'⚠ Pending Questions'}</div><div class="std-field-value" style="color:${s==='Open Questions'?'var(--blue-accent)':'var(--amber)'};">${state.pendingQuestions}</div></div>`;
 
-  const submitLabel=s==='Draft'?'Save Draft to Airtable':s==='Needs Clarification'?'Submit — Needs Clarification':'Create Ticket ✓';
-  const submitClass=s==='Draft'?'btn-draft':s==='Needs Clarification'?'btn-clarification':'btn-success';
+  const submitLabel=s==='Draft'?'Save Draft to Airtable':s==='Needs Clarification'?'File — Needs Clarification':s==='Open Questions'?'File Spike with Open Questions ✓':'Create Ticket ✓';
+  const submitClass=s==='Draft'?'btn-draft':s==='Needs Clarification'?'btn-clarification':s==='Open Questions'?'btn-primary':'btn-success';
 
   document.getElementById('ticket-preview-container').innerHTML=`
     <div class="std-ticket">
@@ -940,10 +976,10 @@ async function submitTicket(status){
     if(f['in-scope']) desc+=`\n\nScope:\n${f['in-scope']}`;
     if(f['dependencies']) desc+=`\n\nDependencies:\n${f['dependencies']}`;
   }
-  if(state.pendingQuestions&&status==='Needs Clarification') desc+=`\n\n⚠ PENDING QUESTIONS:\n${state.pendingQuestions}`;
+  if(state.pendingQuestions&&(status==='Needs Clarification'||status==='Open Questions')) desc+=`\n\n${status==='Open Questions'?'📋 OPEN QUESTIONS':'⚠ PENDING QUESTIONS'}:\n${state.pendingQuestions}`;
 
   const title=(r?r.title:null)||f['task-name']||`${t}: untitled`;
-  const prefixedTitle=(status==='Draft'?'[DRAFT] ':status==='Needs Clarification'?'[NEEDS CLARIFICATION] ':'')+title;
+  const prefixedTitle=(status==='Draft'?'[DRAFT] ':status==='Needs Clarification'?'[NEEDS CLARIFICATION] ':status==='Open Questions'?'[OPEN QUESTIONS] ':'')+title;
 
   const fields={
     'Task Name':prefixedTitle,
@@ -964,12 +1000,13 @@ async function submitTicket(status){
     const data=await res.json();
     if(data.id){
       state.clarifyRecordId=data.id;
-      const icons={Draft:'📝','Needs Clarification':'⚠️','Not Started':'✅'};
-      const titles={Draft:'Saved as Draft','Needs Clarification':'Flagged for Clarification','Not Started':'Ticket Created'};
-      const colors={Draft:'gray','Needs Clarification':'amber','Not Started':'green'};
+      const icons={Draft:'📝','Needs Clarification':'⚠️','Open Questions':'📋','Not Started':'✅'};
+      const titles={Draft:'Saved as Draft','Needs Clarification':'Filed — Needs Clarification','Open Questions':'Spike Filed','Not Started':'Ticket Created'};
+      const colors={Draft:'gray','Needs Clarification':'amber','Open Questions':'green','Not Started':'green'};
       const msgs={
         Draft:`"${title}" saved as a draft. Come back to complete it.`,
         'Needs Clarification':`"${title}" filed with pending questions logged. Use "Update a Ticket" to add answers and re-evaluate.`,
+        'Open Questions':`"${title}" filed with open questions logged. The spike will answer them.`,
         'Not Started':`"${title}" has been added to the Task Tracker.`
       };
       document.getElementById('success-icon').textContent=icons[status]||'✅';
@@ -1173,7 +1210,7 @@ function updateProgress(step){
 }
 
 function resetApp(){
-  state={apiKey:state.apiKey,ticketType:'',resolvedType:'',fields:{},aiFollowups:{},rewrittenTicket:null,pendingQuestions:'',submitStatus:'Not Started',clarifyRecordId:'',clarifyOriginalDesc:'',clarifyPendingQuestions:'',clarifyAnswers:{},isReeval:false};
+  state={apiKey:state.apiKey,ticketType:'',resolvedType:'',fields:{},aiFollowups:{},rewrittenTicket:null,pendingQuestions:'',submitStatus:'Not Started',reviewCount:0,clarifyRecordId:'',clarifyOriginalDesc:'',clarifyPendingQuestions:'',clarifyAnswers:{},isReeval:false};
   goToStep(1);
 }
 </script>
