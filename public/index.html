@@ -647,12 +647,44 @@ Max 4 issues, max 2 followup questions. No markdown. Raw JSON only.`;
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
+    if(data.error){
+      rewriteBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>API error: ${data.error?.message||JSON.stringify(data.error)}</div></div>`;
+      return;
+    }
     const raw=data.content?.[0]?.text||'{}';
-    const result=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const result=parseClaudeJSON(raw);
     renderRewriteResults(result);
   } catch(e){
-    rewriteBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>AI review unavailable — check that ANTHROPIC_API_KEY is set in your Vercel environment variables.</div></div>`;
+    rewriteBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>AI review error: ${e.message}. Check that ANTHROPIC_API_KEY is set in Vercel environment variables.</div></div>`;
   }
+}
+
+function parseClaudeJSON(raw){
+  // Try several strategies to extract valid JSON from Claude's response
+  const strategies=[
+    // 1. Direct parse
+    ()=>JSON.parse(raw),
+    // 2. Strip markdown fences
+    ()=>JSON.parse(raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim()),
+    // 3. Extract first {...} block
+    ()=>{
+      const match=raw.match(/\{[\s\S]*\}/);
+      if(!match) throw new Error('No JSON object found');
+      return JSON.parse(match[0]);
+    },
+    // 4. Extract first {...} block after stripping fences
+    ()=>{
+      const stripped=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'');
+      const match=stripped.match(/\{[\s\S]*\}/);
+      if(!match) throw new Error('No JSON object found after stripping');
+      return JSON.parse(match[0]);
+    }
+  ];
+  for(const strategy of strategies){
+    try { return strategy(); } catch(e){ continue; }
+  }
+  console.error('Failed to parse Claude response:', raw);
+  return {};
 }
 
 function renderRewriteResults(result){
@@ -1030,11 +1062,15 @@ No markdown. Raw JSON only.`;
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
+    if(data.error){
+      aiBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>API error: ${data.error?.message||JSON.stringify(data.error)}</div></div>`;
+      return;
+    }
     const raw=data.content?.[0]?.text||'{}';
-    const result=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const result=parseClaudeJSON(raw);
     renderClarifyResults(result,updatedDesc);
   } catch(e){
-    aiBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>Could not run re-evaluation. Try again.</div></div>`;
+    aiBody.innerHTML=`<div class="ai-issue warning" style="margin:0;"><div class="ai-issue-icon">⚠️</div><div>Re-evaluation error: ${e.message}. Try again.</div></div>`;
   }
 }
 
