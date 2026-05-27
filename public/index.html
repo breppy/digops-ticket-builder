@@ -780,7 +780,7 @@
       <div class="claude-card">
         <div class="claude-header">
           <div class="claude-dot" id="claudeDot"></div>
-          <span id="claudeStatus">claude-sonnet-4-20250514 · processing</span>
+          <span id="claudeStatus">claude-sonnet-4-6 · processing</span>
         </div>
         <div class="claude-body" id="claudeOutput">Analyzing your input...</div>
       </div>
@@ -997,12 +997,12 @@ Respond with this JSON structure (fill all fields; use null for optional fields 
 }`;
 
   try {
-    statusEl.textContent = 'claude-sonnet-4-20250514 · drafting';
+    statusEl.textContent = 'claude-sonnet-4-6 · drafting';
     const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: state.description }]
@@ -1025,13 +1025,13 @@ Respond with this JSON structure (fill all fields; use null for optional fields 
 
     output.textContent = '✓ Draft complete — reviewing with you next.';
     dot.className = 'claude-dot done';
-    statusEl.textContent = 'claude-sonnet-4-20250514 · done';
+    statusEl.textContent = 'claude-sonnet-4-6 · done';
     btnRow.style.display = 'flex';
 
   } catch (err) {
     output.textContent = 'Error: ' + err.message + '\n\nCheck your network or try again.';
     dot.className = 'claude-dot';
-    statusEl.textContent = 'claude-sonnet-4-20250514 · error';
+    statusEl.textContent = 'claude-sonnet-4-6 · error';
     btnRow.style.display = 'flex';
   }
 }
