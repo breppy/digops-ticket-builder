@@ -86,22 +86,6 @@
   .header-title span {
     color: var(--text);
   }
-  .token-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-dimmer);
-    font-family: 'DM Mono', monospace;
-    cursor: pointer;
-  }
-  .token-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--text-dimmer);
-  }
-  .token-dot.connected { background: var(--success); }
-
   /* Main layout */
   main {
     flex: 1;
@@ -645,32 +629,11 @@
 </head>
 <body>
 
-<!-- Token overlay -->
-<div class="overlay" id="tokenOverlay">
-  <div class="overlay-card">
-    <div class="overlay-title">Connect to Airtable</div>
-    <div class="overlay-sub">
-      Enter your personal access token to enable ticket creation. Saved locally — you only need to do this once.<br><br>
-      <a href="https://airtable.com/create/tokens" target="_blank">Generate a token →</a><br>
-      Needs <code>data:records:write</code> on the <strong>Project Dashboard</strong> base.
-    </div>
-    <div class="field-group">
-      <input type="text" id="tokenInput" placeholder="pat..." autocomplete="off" spellcheck="false">
-    </div>
-    <button class="btn-primary" onclick="saveToken()" style="width:100%; justify-content:center;">
-      Save & Continue →
-    </button>
-  </div>
-</div>
 
 <header>
   <div class="header-left">
     <div class="logo-mark">DO</div>
     <div class="header-title">Memorial Sloan Kettering / <span>Ticket Builder</span></div>
-  </div>
-  <div class="token-status" onclick="resetToken()" title="Click to reset token">
-    <div class="token-dot" id="tokenDot"></div>
-    <span id="tokenLabel">no token</span>
   </div>
 </header>
 
@@ -896,37 +859,6 @@ let state = {
   currentStep: 1
 };
 
-// ─── Token management ────────────────────────────────────────────────────────
-function getToken() { return localStorage.getItem('at_token') || ''; }
-function saveToken() {
-  const v = document.getElementById('tokenInput').value.trim();
-  if (!v) return;
-  localStorage.setItem('at_token', v);
-  document.getElementById('tokenOverlay').classList.add('hidden');
-  updateTokenUI();
-}
-function resetToken() {
-  if (!confirm('Reset Airtable token?')) return;
-  localStorage.removeItem('at_token');
-  updateTokenUI();
-  document.getElementById('tokenInput').value = '';
-  document.getElementById('tokenOverlay').classList.remove('hidden');
-}
-function updateTokenUI() {
-  const tok = getToken();
-  const dot = document.getElementById('tokenDot');
-  const lbl = document.getElementById('tokenLabel');
-  if (tok) {
-    dot.classList.add('connected');
-    lbl.textContent = '●●●●' + tok.slice(-4);
-    document.getElementById('tokenOverlay').classList.add('hidden');
-  } else {
-    dot.classList.remove('connected');
-    lbl.textContent = 'no token';
-    document.getElementById('tokenOverlay').classList.remove('hidden');
-  }
-}
-
 // ─── Progress ────────────────────────────────────────────────────────────────
 function updateProgress(step) {
   for (let i = 1; i <= 4; i++) {
@@ -1066,7 +998,7 @@ Respond with this JSON structure (fill all fields; use null for optional fields 
 
   try {
     statusEl.textContent = 'claude-sonnet-4-20250514 · drafting';
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1198,7 +1130,6 @@ async function submitTicket() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
   const dest = BASES[isLO ? 'lo' : 'project'];
-  const token = getToken();
 
   let fields;
   if (isLO) {
@@ -1227,13 +1158,10 @@ async function submitTicket() {
   }
 
   try {
-    const res = await fetch(`https://api.airtable.com/v0/${dest.baseId}/${dest.tableId}`, {
+    const res = await fetch('/api/airtable', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ fields })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields })
     });
 
     const data = await res.json();
@@ -1274,7 +1202,6 @@ function startOver() {
 }
 
 // ─── Init ────────────────────────────────────────────────────────────────────
-updateTokenUI();
 updateProgress(1);
 </script>
 </body>
