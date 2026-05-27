@@ -1143,17 +1143,20 @@ async function submitTicket() {
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [{ id: state.loAssignee }];
   } else {
-    // Map to Project table fields
     const typeMap = {
       'Enhancement': 'Enhancement', 'New Project': 'New Project',
       'Discovery': 'Discovery', 'Optimization': 'Optimization',
       'Maintenance': 'Maintenance', 'Strategic Planning': 'Strategic Planning'
     };
+    const today = new Date().toISOString().split('T')[0];
     fields = {
       'Project Name': draft.name || 'Untitled',
       'Outcome Description': draft.description || '',
       'Type of Request': typeMap[draft.type] || 'Enhancement',
-      'Status': 'Submitted'
+      'Status': 'Submitted',
+      'Work Type': 'PI Request',
+      'Date Submitted': today,
+      'Request Contact': 'Brandy Reppy'
     };
   }
 
