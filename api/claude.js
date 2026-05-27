@@ -42,6 +42,7 @@ export default async function handler(req) {
     });
 
     const data = await response.json();
+
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: {
