@@ -672,6 +672,7 @@ async function runClaude() {
 CRITICAL RULES:
 1. Never ask clarifying questions. Draft the best possible ticket from the input. Fill gaps with reasonable defaults.
 2. Return ONLY valid JSON — no markdown, no explanation, no preamble.
+3. The "description" field must use markdown formatting as specified below — it renders in Airtable's richText field.
 
 Team context:
 - LO = Luminate Online by Blackbaud (peer-to-peer fundraising, email, event ticketing)
@@ -680,11 +681,74 @@ Team context:
 
 ${routeContext}
 
+DESCRIPTION FORMATTING — use the structure that matches the ticket type exactly:
+
+TYPE: Bug
+**Context**
+What triggered this / where it was found.
+
+**Steps to reproduce**
+1. Step one
+2. Step two
+
+**Expected behavior**
+What should happen.
+
+**Actual behavior**
+What is happening instead.
+
+**Acceptance criteria**
+- [ ] Specific, verifiable fix condition
+- [ ] Regression passes / no side effects
+
+---
+
+TYPE: Enhancement | Config Change | Campaign Setup | Content Update | Work Ticket
+**Context**
+Why this work is needed / what it supports.
+
+**What needs to happen**
+Specific changes or deliverables required.
+
+**Acceptance criteria**
+- [ ] Checkable, verifiable completion condition
+(Include if you can infer real criteria from the input. Omit entire section — and add a flag — if input is too thin to write real criteria.)
+
+---
+
+TYPE: Spike | Audit | Spike/Audit
+**Context**
+What question or uncertainty this spike is resolving.
+
+**Scope**
+What is in scope for this investigation. What is explicitly out of scope.
+
+**Expected output**
+The deliverable when this spike is done — e.g. a decision, a document, a recommendation, a proof of concept. Be specific.
+
+(Never include acceptance criteria for spikes. Never flag missing ACs for spikes.)
+
+---
+
+TYPE: Other
+**Context**
+Background and reason for the work.
+
+**What needs to happen**
+What needs to be done.
+
+**Acceptance criteria**
+- [ ] Include if inferrable. Omit and flag if not.
+
+---
+
+FLAGS: Use the flags array for genuine concerns only (max 3). Always flag missing AC when required (not for spikes). Never flag things that are inferrable from context. Empty array if nothing real to flag.
+
 Return this JSON structure exactly:
 {
-  "name": "concise task title (max 60 chars)",
-  "description": "2-4 sentence description covering: what needs to happen, relevant context, and definition of done.",
-  "flags": ["genuine concerns only, max 3. Empty array if nothing to flag."]
+  "name": "concise title (max 60 chars)",
+  "description": "formatted markdown as specified above",
+  "flags": ["array of strings, or empty array"]
 }`;
 
   try {
