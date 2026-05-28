@@ -25,601 +25,140 @@
     --warn-dim: rgba(240,165,0,0.12);
     --lo-color: #7c6ef5;
     --lo-dim: rgba(124,110,245,0.15);
+    --task-color: #2ecc71;
+    --task-dim: rgba(46,204,113,0.12);
     --project-color: #e8541a;
     --project-dim: rgba(232,84,26,0.15);
     --radius: 8px;
     --radius-lg: 12px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  header { border-bottom: 1px solid var(--border); padding: 0 32px; height: 52px; display: flex; align-items: center; background: var(--surface); position: sticky; top: 0; z-index: 10; gap: 16px; }
+  .logo-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: white; letter-spacing: -0.5px; flex-shrink: 0; }
+  .header-title { font-size: 13px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.02em; }
+  .header-title span { color: var(--text); }
 
-  /* Header */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 0 32px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--surface);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .logo-mark {
-    width: 28px;
-    height: 28px;
-    background: var(--accent);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    font-weight: 500;
-    color: white;
-    letter-spacing: -0.5px;
-    flex-shrink: 0;
-  }
-  .header-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-dim);
-    letter-spacing: 0.02em;
-  }
-  .header-title span {
-    color: var(--text);
-  }
-  /* Main layout */
-  main {
-    flex: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 48px 24px 80px;
-  }
+  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px 80px; }
+  .builder { width: 100%; max-width: 680px; }
 
-  .builder {
-    width: 100%;
-    max-width: 680px;
-  }
+  .step-header { margin-bottom: 32px; }
+  .step-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dimmer); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .step-title { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .step-sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
 
-  /* Step header */
-  .step-header {
-    margin-bottom: 32px;
-  }
-  .step-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-dimmer);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-  .step-title {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.3;
-  }
-  .step-sub {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-top: 6px;
-  }
+  /* Route grid — 3 cards */
+  .route-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+  .route-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px; cursor: pointer; transition: all 0.15s ease; text-align: left; position: relative; }
+  .route-card:hover { border-color: var(--border-hi); background: var(--surface2); }
+  .route-card.sel-lo { border-color: var(--lo-color); background: var(--lo-dim); }
+  .route-card.sel-task { border-color: var(--task-color); background: var(--task-dim); }
+  .route-card.sel-project { border-color: var(--accent); background: var(--accent-dim); }
+  .route-card-icon { font-size: 20px; margin-bottom: 8px; display: block; }
+  .route-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .route-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .route-badge { position: absolute; top: 10px; right: 10px; font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.15s; }
+  .sel-lo .route-badge { opacity: 1; background: var(--lo-color); color: white; }
+  .sel-task .route-badge { opacity: 1; background: var(--task-color); color: #0f0f11; }
+  .sel-project .route-badge { opacity: 1; background: var(--accent); color: white; }
 
-  /* Cards */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 12px;
-  }
+  /* Coming soon card */
+  .route-card.coming-soon { opacity: 0.45; cursor: default; }
+  .route-card.coming-soon:hover { border-color: var(--border); background: var(--surface); }
+  .coming-soon-tag { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dimmer); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; display: block; }
 
-  /* Route cards */
-  .route-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .route-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
-  }
-  .route-card:hover {
-    border-color: var(--border-hi);
-    background: var(--surface2);
-  }
-  .route-card.selected-lo {
-    border-color: var(--lo-color);
-    background: var(--lo-dim);
-  }
-  .route-card.selected-project {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-  }
-  .route-card-icon {
-    font-size: 22px;
-    margin-bottom: 10px;
-    display: block;
-  }
-  .route-card-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .route-card-desc {
-    font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-  .route-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    font-weight: 500;
-    padding: 2px 7px;
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .selected-lo .route-badge {
-    opacity: 1;
-    background: var(--lo-color);
-    color: white;
-  }
-  .selected-project .route-badge {
-    opacity: 1;
-    background: var(--accent);
-    color: white;
-  }
-
-  /* Not sure option */
-  .not-sure-btn {
-    width: 100%;
-    background: var(--surface);
-    border: 1.5px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-dim);
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-    text-align: left;
-  }
-  .not-sure-btn:hover {
-    border-color: var(--border-hi);
-    color: var(--text);
-  }
-  .not-sure-btn.selected {
-    border-color: var(--warn);
-    background: var(--warn-dim);
-    color: var(--text);
-  }
-
-  /* Type selector (step 2 for LO) */
-  .type-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .type-chip {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.15s;
-    font-family: 'DM Sans', sans-serif;
-  }
+  /* Type chips */
+  .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .type-chip { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; text-align: left; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
   .type-chip:hover { border-color: var(--border-hi); }
-  .type-chip.selected {
-    border-color: var(--lo-color);
-    background: var(--lo-dim);
-  }
-  .type-chip-icon { font-size: 16px; display: block; margin-bottom: 4px; }
+  .type-chip.selected-lo { border-color: var(--lo-color); background: var(--lo-dim); }
+  .type-chip.selected-task { border-color: var(--task-color); background: var(--task-dim); }
+  .type-chip-icon { font-size: 15px; display: block; margin-bottom: 4px; }
   .type-chip-label { font-size: 12px; font-weight: 500; color: var(--text); }
 
-  /* Priority selector */
-  .priority-row {
-    display: flex;
-    gap: 8px;
-  }
-  .priority-chip {
-    flex: 1;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 10px;
-    cursor: pointer;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-  }
+  /* Priority */
+  .priority-row { display: flex; gap: 8px; }
+  .priority-chip { flex: 1; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 500; color: var(--text-dim); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .priority-chip:hover { border-color: var(--border-hi); color: var(--text); }
-  .priority-chip.selected-high { border-color: #e55; background: rgba(238,85,85,0.12); color: #e55; }
-  .priority-chip.selected-medium { border-color: var(--warn); background: var(--warn-dim); color: var(--warn); }
-  .priority-chip.selected-low { border-color: #5599ee; background: rgba(85,153,238,0.12); color: #5599ee; }
+  .priority-chip.sel-critical { border-color: #e55; background: rgba(238,85,85,0.12); color: #e55; }
+  .priority-chip.sel-high { border-color: #e8541a; background: rgba(232,84,26,0.12); color: #e8541a; }
+  .priority-chip.sel-medium { border-color: var(--warn); background: var(--warn-dim); color: var(--warn); }
+  .priority-chip.sel-low { border-color: #5599ee; background: rgba(85,153,238,0.12); color: #5599ee; }
 
   /* Form fields */
-  .field-group {
-    margin-bottom: 16px;
-  }
-  .field-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .field-label .required {
-    color: var(--accent);
-    font-size: 10px;
-  }
-  .field-label .optional {
-    color: var(--text-dimmer);
-    font-size: 10px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  input[type="text"], input[type="date"], textarea, select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-    resize: vertical;
-  }
-  input[type="text"]:focus,
-  input[type="date"]:focus,
-  textarea:focus,
-  select:focus {
-    border-color: var(--border-hi);
-  }
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.5);
-    cursor: pointer;
-  }
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .field-label .req { color: var(--accent); font-size: 10px; }
+  .field-label .opt { color: var(--text-dimmer); font-size: 10px; font-family: 'DM Mono', monospace; }
+  input[type="text"], input[type="date"], textarea, select { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s; resize: vertical; }
+  input[type="text"]:focus, input[type="date"]:focus, textarea:focus, select:focus { border-color: var(--border-hi); }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
   textarea { min-height: 120px; }
   select option { background: var(--surface2); }
+  .hint { font-size: 11px; color: var(--text-dimmer); margin-top: 4px; font-family: 'DM Mono', monospace; }
 
-  /* Claude processing */
-  .claude-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .claude-header {
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-  }
-  .claude-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.5s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .claude-dot.done {
-    background: var(--success);
-    animation: none;
-  }
-  .claude-body {
-    padding: 16px;
-    font-size: 13px;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    line-height: 1.7;
-    min-height: 80px;
-  }
+  /* Cascade selects */
+  .cascade-group { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; }
+  .cascade-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dimmer); margin-bottom: 8px; }
 
-  /* Review section */
-  .review-field {
-    margin-bottom: 12px;
-  }
-  .review-field-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dimmer);
-    margin-bottom: 4px;
-  }
-  .review-field-value {
-    font-size: 13px;
-    color: var(--text);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .review-field-value.editable {
-    cursor: text;
-    transition: border-color 0.15s;
-  }
-  .review-field-value.editable:hover { border-color: var(--border-hi); }
-  .review-field-value.editable:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  /* Claude card */
+  .claude-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .claude-header { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
+  .claude-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .claude-dot.done { background: var(--success); animation: none; }
+  .claude-body { padding: 16px; font-size: 13px; color: var(--text-dim); font-family: 'DM Mono', monospace; line-height: 1.7; min-height: 80px; }
 
-  /* Flags box */
-  .flags-box {
-    background: var(--warn-dim);
-    border: 1px solid rgba(240,165,0,0.3);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    margin-bottom: 16px;
-  }
-  .flags-box-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--warn);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 8px;
-  }
-  .flags-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .flags-list li {
-    font-size: 12px;
-    color: var(--text);
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.5;
-  }
-  .flags-list li::before {
-    content: '⚑';
-    color: var(--warn);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
+  /* Review */
+  .review-field { margin-bottom: 12px; }
+  .review-field-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dimmer); margin-bottom: 4px; }
+  .review-field-value { font-size: 13px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 
-  /* Routing chip */
-  .destination-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    margin-bottom: 20px;
-  }
-  .destination-chip.lo {
-    background: var(--lo-dim);
-    border: 1px solid var(--lo-color);
-    color: var(--lo-color);
-  }
-  .destination-chip.project {
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-  }
+  /* Flags */
+  .flags-box { background: var(--warn-dim); border: 1px solid rgba(240,165,0,0.3); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; }
+  .flags-box-label { font-size: 11px; font-weight: 600; color: var(--warn); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .flags-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .flags-list li { font-size: 12px; color: var(--text); display: flex; align-items: flex-start; gap: 6px; line-height: 1.5; }
+  .flags-list li::before { content: '⚑'; color: var(--warn); flex-shrink: 0; margin-top: 1px; }
 
-  /* Divider */
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 20px 0;
-  }
+  /* Destination chip */
+  .destination-chip { display: inline-flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 20px; margin-bottom: 20px; }
+  .destination-chip.lo { background: var(--lo-dim); border: 1px solid var(--lo-color); color: var(--lo-color); }
+  .destination-chip.task { background: var(--task-dim); border: 1px solid var(--task-color); color: var(--task-color); }
+  .destination-chip.project { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); }
 
   /* Buttons */
-  .btn-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 24px;
-    align-items: center;
-  }
-  .btn-back {
-    background: none;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 18px;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-back:hover {
-    border-color: var(--border-hi);
-    color: var(--text);
-  }
-  .btn-primary {
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    padding: 10px 22px;
-    color: white;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; align-items: center; }
+  .btn-back { background: none; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 18px; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-back:hover { border-color: var(--border-hi); color: var(--text); }
+  .btn-primary { background: var(--accent); border: none; border-radius: var(--radius); padding: 10px 22px; color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
   .btn-primary:hover { background: var(--accent-hover); }
-  .btn-primary:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  .btn-lo {
-    background: var(--lo-color);
-  }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-lo { background: var(--lo-color); }
   .btn-lo:hover { background: #9080ff; }
+  .btn-task { background: #27ae60; }
+  .btn-task:hover { background: #2ecc71; }
 
-  /* Progress dots */
-  .progress {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 32px;
-  }
-  .progress-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--border);
-    transition: all 0.2s;
-  }
+  /* Progress */
+  .progress { display: flex; align-items: center; gap: 6px; margin-bottom: 32px; }
+  .progress-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
   .progress-dot.active { background: var(--accent); transform: scale(1.3); }
   .progress-dot.done { background: var(--success); }
-  .progress-line {
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-    max-width: 40px;
-  }
+  .progress-line { flex: 1; height: 1px; background: var(--border); max-width: 40px; }
 
-  /* Token setup overlay */
-  .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15,15,17,0.92);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: 24px;
-    backdrop-filter: blur(4px);
-  }
-  .overlay-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 28px;
-    max-width: 440px;
-    width: 100%;
-  }
-  .overlay-title {
-    font-size: 17px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .overlay-sub {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-  .overlay-sub a { color: var(--accent); text-decoration: none; }
-  .overlay-sub a:hover { text-decoration: underline; }
+  /* Success */
+  .success-screen { text-align: center; padding: 60px 24px; }
+  .success-icon { font-size: 48px; margin-bottom: 16px; }
+  .success-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 28px; }
+  .success-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dimmer); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; display: inline-block; margin-bottom: 28px; }
 
-  /* Success screen */
-  .success-screen {
-    text-align: center;
-    padding: 60px 24px;
-  }
-  .success-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-  }
-  .success-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-  .success-sub {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-bottom: 28px;
-  }
-  .success-id {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--text-dimmer);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 14px;
-    display: inline-block;
-    margin-bottom: 28px;
-  }
-
-  /* Utility */
   .hidden { display: none !important; }
-  .mt-4 { margin-top: 4px; }
-  .mt-8 { margin-top: 8px; }
-  .mt-12 { margin-top: 12px; }
-
-  .hint {
-    font-size: 11px;
-    color: var(--text-dimmer);
-    margin-top: 4px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* Step visibility */
   .step { display: none; }
   .step.active { display: block; }
 
-  @media (max-width: 540px) {
+  @media (max-width: 600px) {
     header { padding: 0 16px; }
     main { padding: 32px 16px 60px; }
     .route-grid { grid-template-columns: 1fr; }
@@ -629,252 +168,380 @@
 </head>
 <body>
 
-
 <header>
-  <div class="header-left">
-    <div class="logo-mark">DO</div>
-    <div class="header-title">Memorial Sloan Kettering / <span>Ticket Builder</span></div>
-  </div>
+  <div class="logo-mark">DO</div>
+  <div class="header-title">Memorial Sloan Kettering / <span>Ticket Builder</span></div>
 </header>
 
 <main>
-  <div class="builder">
+<div class="builder">
 
-    <!-- Progress -->
-    <div class="progress" id="progressBar">
-      <div class="progress-dot" id="dot1"></div>
-      <div class="progress-line"></div>
-      <div class="progress-dot" id="dot2"></div>
-      <div class="progress-line"></div>
-      <div class="progress-dot" id="dot3"></div>
-      <div class="progress-line"></div>
-      <div class="progress-dot" id="dot4"></div>
-    </div>
-
-    <!-- STEP 1: Route -->
-    <div class="step active" id="step1">
-      <div class="step-header">
-        <div class="step-label">Step 1 of 4</div>
-        <div class="step-title">Where does this work live?</div>
-        <div class="step-sub">Pick the destination first — this determines the ticket format and where it lands in Airtable.</div>
-      </div>
-
-      <div class="route-grid">
-        <button class="route-card" id="routeLO" onclick="selectRoute('lo')">
-          <span class="route-badge">Selected</span>
-          <span class="route-card-icon">⚙️</span>
-          <div class="route-card-title">LO Work Item</div>
-          <div class="route-card-desc">Standalone Luminate Online task — config, content, bug, campaign setup, or enhancement that doesn't belong to a larger project.</div>
-        </button>
-        <button class="route-card" id="routeProject" onclick="selectRoute('project')">
-          <span class="route-badge">Selected</span>
-          <span class="route-card-icon">🗂️</span>
-          <div class="route-card-title">Project Ticket</div>
-          <div class="route-card-desc">Feature request, discovery spike, or initiative that goes through the DevISO scoring and PI Planning workflow.</div>
-        </button>
-      </div>
-
-      <button class="not-sure-btn" id="routeUnsure" onclick="selectRoute('unsure')">
-        🤷 Not sure — describe what you know and Claude will recommend
-      </button>
-
-      <div class="btn-row">
-        <div style="flex:1"></div>
-        <button class="btn-primary" id="step1Next" onclick="goToStep2()" disabled>
-          Continue →
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 2: Details -->
-    <div class="step" id="step2">
-      <div class="step-header">
-        <div class="step-label">Step 2 of 4</div>
-        <div class="step-title" id="step2Title">Tell me about the work</div>
-        <div class="step-sub" id="step2Sub">Rough notes are fine. The more you include, the less Claude has to guess.</div>
-      </div>
-
-      <!-- LO-specific fields -->
-      <div id="loFields">
-        <div class="field-group">
-          <div class="field-label">Type <span class="required">required</span></div>
-          <div class="type-grid">
-            <button class="type-chip" onclick="selectType('Enhancement')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
-            <button class="type-chip" onclick="selectType('Bug')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
-            <button class="type-chip" onclick="selectType('Config Change')"><span class="type-chip-icon">🔧</span><span class="type-chip-label">Config Change</span></button>
-            <button class="type-chip" onclick="selectType('Content Update')"><span class="type-chip-icon">📝</span><span class="type-chip-label">Content Update</span></button>
-            <button class="type-chip" onclick="selectType('Campaign Setup')"><span class="type-chip-icon">📣</span><span class="type-chip-label">Campaign Setup</span></button>
-            <button class="type-chip" onclick="selectType('Spike/Audit')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike / Audit</span></button>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <div class="field-label">Priority <span class="required">required</span></div>
-          <div class="priority-row">
-            <button class="priority-chip" onclick="selectPriority('High')">🔴 High</button>
-            <button class="priority-chip" onclick="selectPriority('Medium')">🟡 Medium</button>
-            <button class="priority-chip" onclick="selectPriority('Low')">🔵 Low</button>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <div class="field-label">Assignee <span class="optional">optional</span></div>
-          <select id="loAssignee">
-            <option value="">— unassigned —</option>
-            <option value="usrHDiOwOhzbuyo1O">Brandy Reppy</option>
-            <option value="usrzYY7pFg8lOJb0J">Christopher Hunt</option>
-            <option value="usrPFuHJv46zLd3y8">Daniel Krumm</option>
-            <option value="usrqwC3IkGokBadPj">Erik Haunold</option>
-            <option value="usrtnu1LRTEDVvQwd">Hooria Tariq</option>
-            <option value="usr2Nyfv2evA55oG9">Shannon Kenney</option>
-            <option value="usrWhUIlixwJvXU4g">Nicole Thurgood</option>
-          </select>
-        </div>
-
-        <div class="field-group">
-          <div class="field-label">Due date <span class="optional">optional</span></div>
-          <input type="date" id="loDate">
-        </div>
-      </div>
-
-      <!-- Project-specific fields -->
-      <div id="projectFields" class="hidden">
-        <div class="field-group">
-          <div class="field-label">Request type <span class="required">required</span></div>
-          <select id="projectType">
-            <option value="">— select —</option>
-            <option>Enhancement</option>
-            <option>New Project</option>
-            <option>Discovery</option>
-            <option>Optimization</option>
-            <option>Maintenance</option>
-            <option>Strategic Planning</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Shared description -->
-      <div class="field-group">
-        <div class="field-label">Description <span class="required">required</span></div>
-        <textarea id="workDescription" placeholder="What needs to happen? What's the context? What does success look like? Include any constraints, deadlines, or impacted areas you know about."></textarea>
-        <div class="hint">More context → fewer assumptions → faster ticket. Aim for 2–5 sentences.</div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-back" onclick="goToStep1()">← Back</button>
-        <div style="flex:1"></div>
-        <button class="btn-primary" id="step2Next" onclick="goToStep3()">
-          Draft with Claude →
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 3: Claude drafts -->
-    <div class="step" id="step3">
-      <div class="step-header">
-        <div class="step-label">Step 3 of 4</div>
-        <div class="step-title">Drafting your ticket</div>
-        <div class="step-sub">Claude is writing a complete ticket from your notes. One pass — then you review.</div>
-      </div>
-
-      <div class="claude-card">
-        <div class="claude-header">
-          <div class="claude-dot" id="claudeDot"></div>
-          <span id="claudeStatus">claude-sonnet-4-6 · processing</span>
-        </div>
-        <div class="claude-body" id="claudeOutput">Analyzing your input...</div>
-      </div>
-
-      <div class="btn-row" id="step3BtnRow" style="display:none">
-        <button class="btn-back" onclick="goToStep2()">← Revise input</button>
-        <div style="flex:1"></div>
-        <button class="btn-primary" id="reviewBtn" onclick="goToStep4()">
-          Review & Submit →
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 4: Review & submit -->
-    <div class="step" id="step4">
-      <div class="step-header">
-        <div class="step-label">Step 4 of 4</div>
-        <div class="step-title">Review & Submit</div>
-        <div class="step-sub">Fields marked editable can be clicked to make changes before submitting.</div>
-      </div>
-
-      <div class="destination-chip" id="destinationChip"></div>
-
-      <!-- Flags -->
-      <div class="flags-box hidden" id="flagsBox">
-        <div class="flags-box-label">Claude flagged the following</div>
-        <ul class="flags-list" id="flagsList"></ul>
-      </div>
-
-      <!-- Review fields populated by JS -->
-      <div id="reviewFields"></div>
-
-      <div class="btn-row">
-        <button class="btn-back" onclick="goToStep3()">← Back</button>
-        <div style="flex:1"></div>
-        <button class="btn-primary" id="submitBtn" onclick="submitTicket()">
-          Create Ticket ✓
-        </button>
-      </div>
-    </div>
-
-    <!-- SUCCESS -->
-    <div class="step" id="stepSuccess">
-      <div class="success-screen">
-        <div class="success-icon">✅</div>
-        <div class="success-title">Ticket created</div>
-        <div class="success-sub" id="successSub">Your ticket has been added to Airtable.</div>
-        <div class="success-id" id="successId"></div>
-        <div>
-          <button class="btn-primary" style="margin:0 auto" onclick="startOver()">
-            Write another ticket
-          </button>
-        </div>
-      </div>
-    </div>
-
+  <!-- Progress -->
+  <div class="progress" id="progressBar">
+    <div class="progress-dot" id="dot1"></div>
+    <div class="progress-line"></div>
+    <div class="progress-dot" id="dot2"></div>
+    <div class="progress-line"></div>
+    <div class="progress-dot" id="dot3"></div>
+    <div class="progress-line"></div>
+    <div class="progress-dot" id="dot4"></div>
   </div>
+
+  <!-- STEP 1: Route -->
+  <div class="step active" id="step1">
+    <div class="step-header">
+      <div class="step-label">Step 1 of 4</div>
+      <div class="step-title">What are you logging?</div>
+      <div class="step-sub">Pick the destination first — this determines the ticket format and where it lands in Airtable.</div>
+    </div>
+
+    <div class="route-grid">
+      <button class="route-card" id="routeLO" onclick="selectRoute('lo')">
+        <span class="route-badge">Selected</span>
+        <span class="route-card-icon">⚙️</span>
+        <div class="route-card-title">LO Work Item</div>
+        <div class="route-card-desc">Standalone Luminate Online task — config, content, bug, campaign setup, or enhancement.</div>
+      </button>
+      <button class="route-card" id="routeTask" onclick="selectRoute('task')">
+        <span class="route-badge">Selected</span>
+        <span class="route-card-icon">📋</span>
+        <div class="route-card-title">Project Task</div>
+        <div class="route-card-desc">A task that belongs to an existing project and milestone in the Task Tracker.</div>
+      </button>
+      <button class="route-card coming-soon" id="routeProject" disabled>
+        <span class="route-card-icon">🗂️</span>
+        <div class="route-card-title">New Project</div>
+        <div class="route-card-desc">New initiative through PI Planning and DevISO scoring.</div>
+        <span class="coming-soon-tag">Coming soon</span>
+      </button>
+    </div>
+
+    <div class="btn-row">
+      <div style="flex:1"></div>
+      <button class="btn-primary" id="step1Next" onclick="goToStep2()" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Details -->
+  <div class="step" id="step2">
+    <div class="step-header">
+      <div class="step-label">Step 2 of 4</div>
+      <div class="step-title" id="step2Title">Details</div>
+      <div class="step-sub" id="step2Sub">Fill in what you know.</div>
+    </div>
+
+    <!-- LO fields -->
+    <div id="loFields" class="hidden">
+      <div class="field-group">
+        <div class="field-label">Type <span class="req">required</span></div>
+        <div class="type-grid">
+          <button class="type-chip" onclick="selectType('Enhancement','lo')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
+          <button class="type-chip" onclick="selectType('Bug','lo')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
+          <button class="type-chip" onclick="selectType('Config Change','lo')"><span class="type-chip-icon">🔧</span><span class="type-chip-label">Config Change</span></button>
+          <button class="type-chip" onclick="selectType('Content Update','lo')"><span class="type-chip-icon">📝</span><span class="type-chip-label">Content Update</span></button>
+          <button class="type-chip" onclick="selectType('Campaign Setup','lo')"><span class="type-chip-icon">📣</span><span class="type-chip-label">Campaign Setup</span></button>
+          <button class="type-chip" onclick="selectType('Spike/Audit','lo')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike / Audit</span></button>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Priority <span class="req">required</span></div>
+        <div class="priority-row" id="loPriorityRow">
+          <button class="priority-chip" onclick="selectPriority('High','lo')">🔴 High</button>
+          <button class="priority-chip" onclick="selectPriority('Medium','lo')">🟡 Medium</button>
+          <button class="priority-chip" onclick="selectPriority('Low','lo')">🔵 Low</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Assignee <span class="opt">optional</span></div>
+        <select id="loAssignee">
+          <option value="">— unassigned —</option>
+          <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
+          <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
+          <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
+          <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
+          <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
+          <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
+          <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Due date <span class="opt">optional</span></div>
+        <input type="date" id="loDate">
+      </div>
+    </div>
+
+    <!-- Task Tracker fields -->
+    <div id="taskFields" class="hidden">
+
+      <div class="cascade-group">
+        <div class="cascade-label">Project & Milestone</div>
+        <div class="field-group" style="margin-bottom:12px">
+          <div class="field-label">Project <span class="req">required</span></div>
+          <select id="taskProject" onchange="onProjectChange()">
+            <option value="">— select a project —</option>
+            <option value="rec8yRUa9H72G5kNc">CFS Captain Research Survey (Phase 1B)</option>
+            <option value="recZpRRs2uJRHOf96">Goal Accelerator (Cycle for Survival)</option>
+            <option value="recWhOZAtXp6ZUFZU">Goal Accelerator (Fred's Team)</option>
+            <option value="recnZewNDr6PxAKXw">Unified Measurement Infrastructure: GA4 &amp; GTM</option>
+            <option value="recfAzlI7JomtkxFp">CFS GA4 &amp; GTM Tracking</option>
+            <option value="recSK8fZgtLupqMPl">CFS Segmentation — Phase 1</option>
+            <option value="recz8QJHJUffBctmK">CFS27 Group Configuration &amp; Cleanup</option>
+            <option value="recyQIfAbntRkQ19A">LO Complete Cover</option>
+            <option value="recPUryoYZEkZyLOP">Email Preference Center &amp; Opt-Out Remediation</option>
+            <option value="recR3wzpfrxJGR4g1">LO Ticket Store UX</option>
+            <option value="recLvtgE1gRqfpMNL">Internal Projects</option>
+            <option value="recSx7fjCpqCKx8RE">Automation BAU</option>
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Milestone <span class="req">required</span></div>
+          <select id="taskMilestone" disabled>
+            <option value="">— select a project first —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Task Type <span class="req">required</span></div>
+        <div class="type-grid">
+          <button class="type-chip" onclick="selectType('Work Ticket','task')"><span class="type-chip-icon">🎫</span><span class="type-chip-label">Work Ticket</span></button>
+          <button class="type-chip" onclick="selectType('Bug','task')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
+          <button class="type-chip" onclick="selectType('Enhancement','task')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
+          <button class="type-chip" onclick="selectType('Spike','task')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike</span></button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Priority <span class="req">required</span></div>
+        <div class="priority-row" id="taskPriorityRow">
+          <button class="priority-chip" onclick="selectPriority('Critical','task')">🚨 Critical</button>
+          <button class="priority-chip" onclick="selectPriority('High','task')">🔴 High</button>
+          <button class="priority-chip" onclick="selectPriority('Medium','task')">🟡 Medium</button>
+          <button class="priority-chip" onclick="selectPriority('Low','task')">🔵 Low</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Effort Size <span class="opt">optional</span></div>
+        <select id="taskEffort">
+          <option value="">— unknown —</option>
+          <option value="X-Small">X-Small (~2h)</option>
+          <option value="Small">Small (~4h)</option>
+          <option value="Medium">Medium (~8h)</option>
+          <option value="Large">Large (~16h)</option>
+          <option value="X-Large">X-Large (~32h)</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Assignee <span class="opt">optional</span></div>
+        <select id="taskAssignee">
+          <option value="">— unassigned —</option>
+          <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
+          <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
+          <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
+          <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
+          <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
+          <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
+          <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field-group">
+          <div class="field-label">Start date <span class="opt">optional</span></div>
+          <input type="date" id="taskStart">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Due date <span class="opt">optional</span></div>
+          <input type="date" id="taskDue">
+        </div>
+      </div>
+    </div>
+
+    <!-- Shared description -->
+    <div class="field-group">
+      <div class="field-label">Description <span class="req">required</span></div>
+      <textarea id="workDescription" placeholder="What needs to happen? What's the context? What does done look like?"></textarea>
+      <div class="hint">More context → fewer assumptions → faster ticket.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-back" onclick="goToStep1()">← Back</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary" id="step2Next" onclick="goToStep3()">Draft with Claude →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Claude drafts -->
+  <div class="step" id="step3">
+    <div class="step-header">
+      <div class="step-label">Step 3 of 4</div>
+      <div class="step-title">Drafting your ticket</div>
+      <div class="step-sub">One pass — then you review and submit.</div>
+    </div>
+    <div class="claude-card">
+      <div class="claude-header">
+        <div class="claude-dot" id="claudeDot"></div>
+        <span id="claudeStatus">claude-sonnet-4-6 · processing</span>
+      </div>
+      <div class="claude-body" id="claudeOutput">Analyzing your input...</div>
+    </div>
+    <div class="btn-row" id="step3BtnRow" style="display:none">
+      <button class="btn-back" onclick="goToStep2()">← Revise input</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary" id="reviewBtn" onclick="goToStep4()">Review & Submit →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Review & submit -->
+  <div class="step" id="step4">
+    <div class="step-header">
+      <div class="step-label">Step 4 of 4</div>
+      <div class="step-title">Review & Submit</div>
+      <div class="step-sub">Click any editable field to make changes before submitting.</div>
+    </div>
+    <div class="destination-chip" id="destinationChip"></div>
+    <div class="flags-box hidden" id="flagsBox">
+      <div class="flags-box-label">Claude flagged the following</div>
+      <ul class="flags-list" id="flagsList"></ul>
+    </div>
+    <div id="reviewFields"></div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="goToStep3()">← Back</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary" id="submitBtn" onclick="submitTicket()">Create Ticket ✓</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="step" id="stepSuccess">
+    <div class="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Ticket created</div>
+      <div class="success-sub" id="successSub">Your ticket has been added to Airtable.</div>
+      <div class="success-id" id="successId"></div>
+      <button class="btn-primary" style="margin:0 auto" onclick="startOver()">Write another ticket</button>
+    </div>
+  </div>
+
+</div>
 </main>
 
 <script>
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 const BASES = {
-  lo: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', label: 'LO Work Items → Project Dashboard' },
-  project: { baseId: 'appSIf1E1ln0vIm48', tableId: 'tblUxLyobdJ0sP7Ow', label: 'Projects → PI Planning' }
+  lo:      { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc' },
+  task:    { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww' },
+  project: { baseId: 'appSIf1E1ln0vIm48', tableId: 'tblUxLyobdJ0sP7Ow' }
+};
+
+// Milestones keyed by project record ID
+const MILESTONES = {
+  'rec8yRUa9H72G5kNc': [
+    { id: 'recXWCPAmw2qjMgh4', name: 'Survey Design Finalization & Approval' },
+    { id: 'recPCvcgNVWB3oUDc', name: 'Segment Message Variants Finalized' },
+    { id: 'rec9Qp5KAq8UyDxNe', name: 'Survey Deployment Complete' },
+    { id: 'recpB0z1bQOWMIYMt', name: 'Insights Analysis & Synthesis Complete' },
+    { id: 'rec0bViAJMDggFde5', name: 'Findings Brief Delivered' },
+  ],
+  'recZpRRs2uJRHOf96': [
+    { id: 'recCmCVKHgibXItxk', name: 'M1: CFS Parameter Definition & Stakeholder Alignment' },
+    { id: 'recMFohKZfujhHkIY', name: 'M2: Engineering Configuration & Integration' },
+    { id: 'recHGXt4k2JsbHPBF', name: 'M3: QA Testing & Acceptance' },
+    { id: 'recQRoA8gQDdQnGw2', name: 'M4: Launch & Initial Monitoring' },
+  ],
+  'recWhOZAtXp6ZUFZU': [
+    { id: 'recQh21I8Ut6HRio3', name: 'M1: Requirements & Technical Scoping' },
+    { id: 'rec8jeQw9Hcck9dSb', name: 'M2: Engineering Build' },
+    { id: 'recKNTVhh1jdTruFD', name: 'M3: QA Testing & Acceptance' },
+    { id: 'recSKYoQoxRfC3uGk', name: 'M4: Launch & Phase 1 Monitoring' },
+    { id: 'recZ94jACdZu4wABG', name: 'Discovery & Requirements Finalization' },
+    { id: 'recHrWZe3GyolhmzO', name: 'Design & UX Mockups' },
+    { id: 'rec9QmkUSQIpMnlhr', name: 'Development & Implementation' },
+  ],
+  'recnZewNDr6PxAKXw': [
+    { id: 'recuigzpzEEW3HZc7', name: 'Phase 0 — Distribute KPI intake to stakeholders' },
+    { id: 'recuwzdD0ngvtUlDL', name: 'Phase 0 — Confirm M+R vendor tag status' },
+    { id: 'recQfGheSijJpN8yD', name: 'Phase 0 — Confirm LO variable availability' },
+    { id: 'recoxAn4O7M0peynE', name: 'Phase 0 — Align with Wide Eye on GA4 architecture' },
+    { id: 'recFoD0F4e4IfVxLi', name: 'Phase 1 — GA4 property consolidation and stream setup' },
+    { id: 'recBuCiqa1ozLLGuc', name: 'Phase 1 — Standardize Luminate dataLayer pushes' },
+    { id: 'reckmgurkXSRvkku6', name: 'Phase 1 — Update SSL domain references in GTM' },
+    { id: 'recRVhdIIJzddXJM3', name: 'Phase 1 — GTM consolidation under Giving container' },
+    { id: 'recSqZ0VaFXqgnkLu', name: 'Phase 1 — Configure GA4 ecommerce schema' },
+    { id: 'recQmBOera0rjovcB', name: 'Phase 2 — QA sign-off across all events' },
+    { id: 'rec2dyvrvxC8dOYv9', name: 'Phase 2 — 4-week baseline monitoring hold' },
+    { id: 'recPxA9yOpgXmCNn7', name: 'Phase 2 — Build Looker Studio Executive Summary' },
+    { id: 'recojx2XZaj8Z3zpk', name: 'Phase 2 — Build CFS funnel deep dive dashboard' },
+    { id: 'rect0st9fu2qnAs5R', name: 'Phase 3 — Expand dashboard to all program KPIs' },
+    { id: 'rec53yYonUppAGOid', name: 'Phase 3 — Add What Needs Attention layer' },
+    { id: 'recn239MTz0DQHTTe', name: "Phase 3 — Expand Fred's Team and Giving instrumentation" },
+    { id: 'rectPMYKRLAh9rbBX', name: 'Phase 3 — Begin first CFS registration flow pilot' },
+    { id: 'recVp08PCd9d4ASA3', name: 'Phase 4 — Establish recurring performance review' },
+    { id: 'reck3do5inLjKUEmz', name: 'Phase 4 — Establish GTM governance process' },
+  ],
+  'recfAzlI7JomtkxFp': [],
+  'recSK8fZgtLupqMPl': [],
+  'recz8QJHJUffBctmK': [],
+  'recyQIfAbntRkQ19A': [
+    { id: 'recJNFA22ABecz0BT', name: 'QA Testing & Validation (Complete Cover vs Donor Cover)' },
+    { id: 'recOFDXvdEY2KEg1m', name: 'CRM & Reporting Validation' },
+    { id: 'rec2rN6afStuNM8aY', name: 'Test Form Build & Dynamic Yield Setup' },
+    { id: 'recWdJdd6DbOLCw4l', name: 'Pilot Launch & Monitoring' },
+    { id: 'recYFMSrI2X6iKE0z', name: 'Results Analysis & Rollout Decision' },
+  ],
+  'recPUryoYZEkZyLOP': [],
+  'recR3wzpfrxJGR4g1': [
+    { id: 'recH6lcNiWTPB5d3X', name: 'Discovery & Requirements Gathering' },
+    { id: 'recKFLryWcVA5DMW2', name: 'UX Design & Prototyping' },
+    { id: 'recJEVEWuHpDeu0Qc', name: 'Technical Architecture & CRM Integration Planning' },
+    { id: 'recSKtAmVKyw75FNV', name: 'Development - Phase 1 (Core UX)' },
+    { id: 'recW5XwfrZGHk1fZC', name: 'Development - Phase 2 (Custom Fields & Add-ons)' },
+    { id: 'rec1B8nQBtVhsw4Ql', name: 'QA, Testing & Pilot Preparation' },
+    { id: 'rec29SpLZdtT6sokz', name: 'Pilot Launch & Performance Monitoring' },
+  ],
+  'recLvtgE1gRqfpMNL': [],
+  'recSx7fjCpqCKx8RE': [],
+};
+
+const TEAM_NAMES = {
+  'rec1zJZdWbOfKUr8B': 'Brandy Reppy',
+  'recZPk5UCg0aZof4r': 'Christopher Hunt',
+  'recPNbEnssFMGRHQx': 'Dan Krumm',
+  'recPDfXyw7Ewvwktd': 'Erik Haunold',
+  'recGJfQXlp8KCl82S': 'Hooria Tariq',
+  'recWpA1fDeHRb4nTf': 'Shannon Kenney',
+  'recmMouUvoEbbDi4y': 'Nicole Thurgood',
 };
 
 // ─── State ───────────────────────────────────────────────────────────────────
 let state = {
-  route: null,       // 'lo' | 'project' | 'unsure'
-  loType: null,
-  loPriority: null,
-  loDate: null,
-  projectType: null,
+  route: null,
+  // LO
+  loType: null, loPriority: null, loDate: '', loAssignee: '',
+  // Task
+  taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
+  taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
+  // Shared
   description: '',
-  claudeDraft: null, // parsed JSON from Claude
-  currentStep: 1
+  claudeDraft: null,
 };
 
 // ─── Progress ────────────────────────────────────────────────────────────────
 function updateProgress(step) {
   for (let i = 1; i <= 4; i++) {
-    const dot = document.getElementById('dot' + i);
-    if (i < step) { dot.className = 'progress-dot done'; }
-    else if (i === step) { dot.className = 'progress-dot active'; }
-    else { dot.className = 'progress-dot'; }
+    const d = document.getElementById('dot' + i);
+    d.className = 'progress-dot' + (i < step ? ' done' : i === step ? ' active' : '');
   }
 }
 
-// ─── Step navigation ─────────────────────────────────────────────────────────
+// ─── Step nav ─────────────────────────────────────────────────────────────────
 function showStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   const el = n === 'success' ? document.getElementById('stepSuccess') : document.getElementById('step' + n);
   if (el) el.classList.add('active');
-  if (typeof n === 'number') { updateProgress(n); state.currentStep = n; }
+  if (typeof n === 'number') updateProgress(n);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -882,39 +549,42 @@ function goToStep1() { showStep(1); }
 
 function goToStep2() {
   if (!state.route) return;
-  // Configure step 2 based on route
   document.getElementById('loFields').classList.toggle('hidden', state.route !== 'lo');
-  document.getElementById('projectFields').classList.toggle('hidden', state.route !== 'project');
-  if (state.route === 'unsure') {
-    document.getElementById('step2Title').textContent = 'Describe what you know';
-    document.getElementById('step2Sub').textContent = "Claude will figure out the right ticket type. Just tell it what needs to happen.";
-    document.getElementById('loFields').classList.add('hidden');
-    document.getElementById('projectFields').classList.add('hidden');
-  } else if (state.route === 'lo') {
+  document.getElementById('taskFields').classList.toggle('hidden', state.route !== 'task');
+  if (state.route === 'lo') {
     document.getElementById('step2Title').textContent = 'LO Work Item details';
-    document.getElementById('step2Sub').textContent = "Pick a type and priority, then describe the work.";
+    document.getElementById('step2Sub').textContent = 'Pick a type and priority, then describe the work.';
   } else {
-    document.getElementById('step2Title').textContent = 'Project ticket details';
-    document.getElementById('step2Sub').textContent = "Select the request type and describe the work.";
+    document.getElementById('step2Title').textContent = 'Project Task details';
+    document.getElementById('step2Sub').textContent = 'Select the project, milestone, and task type.';
   }
   showStep(2);
 }
 
 function goToStep3() {
-  // Validate
   const desc = document.getElementById('workDescription').value.trim();
   if (!desc) { alert('Please add a description.'); return; }
-  if (state.route === 'lo' && !state.loType) { alert('Please select a type.'); return; }
-  if (state.route === 'lo' && !state.loPriority) { alert('Please select a priority.'); return; }
-  if (state.route === 'project') {
-    const pt = document.getElementById('projectType').value;
-    if (!pt) { alert('Please select a request type.'); return; }
-    state.projectType = pt;
+
+  if (state.route === 'lo') {
+    if (!state.loType) { alert('Please select a type.'); return; }
+    if (!state.loPriority) { alert('Please select a priority.'); return; }
+    state.loDate = document.getElementById('loDate').value;
+    state.loAssignee = document.getElementById('loAssignee').value;
+  } else {
+    if (!document.getElementById('taskProject').value) { alert('Please select a project.'); return; }
+    if (!document.getElementById('taskMilestone').value) { alert('Please select a milestone.'); return; }
+    if (!state.taskType) { alert('Please select a task type.'); return; }
+    if (!state.taskPriority) { alert('Please select a priority.'); return; }
+    state.taskProject = document.getElementById('taskProject').value;
+    state.taskProjectName = document.getElementById('taskProject').options[document.getElementById('taskProject').selectedIndex].text;
+    state.taskMilestone = document.getElementById('taskMilestone').value;
+    state.taskMilestoneName = document.getElementById('taskMilestone').options[document.getElementById('taskMilestone').selectedIndex].text;
+    state.taskEffort = document.getElementById('taskEffort').value;
+    state.taskAssignee = document.getElementById('taskAssignee').value;
+    state.taskStart = document.getElementById('taskStart').value;
+    state.taskDue = document.getElementById('taskDue').value;
   }
   state.description = desc;
-  state.loDate = document.getElementById('loDate') ? document.getElementById('loDate').value : '';
-  state.loAssignee = document.getElementById('loAssignee') ? document.getElementById('loAssignee').value : '';
-
   showStep(3);
   runClaude();
 }
@@ -928,30 +598,55 @@ function goToStep4() {
 // ─── Route / type / priority selection ───────────────────────────────────────
 function selectRoute(r) {
   state.route = r;
-  document.getElementById('routeLO').className = 'route-card' + (r === 'lo' ? ' selected-lo' : '');
-  document.getElementById('routeProject').className = 'route-card' + (r === 'project' ? ' selected-project' : '');
-  document.getElementById('routeUnsure').className = 'not-sure-btn' + (r === 'unsure' ? ' selected' : '');
+  document.getElementById('routeLO').className = 'route-card' + (r === 'lo' ? ' sel-lo' : '');
+  document.getElementById('routeTask').className = 'route-card' + (r === 'task' ? ' sel-task' : '');
   document.getElementById('step1Next').disabled = false;
   const btn = document.getElementById('step1Next');
-  btn.className = 'btn-primary' + (r === 'lo' ? ' btn-lo' : '');
+  btn.className = 'btn-primary' + (r === 'lo' ? ' btn-lo' : r === 'task' ? ' btn-task' : '');
 }
 
-function selectType(t) {
-  state.loType = t;
+function selectType(t, route) {
+  state[route === 'lo' ? 'loType' : 'taskType'] = t;
+  const cls = 'selected-' + route;
   document.querySelectorAll('.type-chip').forEach(c => {
-    c.classList.toggle('selected', c.querySelector('.type-chip-label').textContent === t);
+    c.classList.remove('selected-lo', 'selected-task');
+    if (c.querySelector('.type-chip-label').textContent.trim() === t) c.classList.add(cls);
   });
 }
 
-function selectPriority(p) {
-  state.loPriority = p;
-  document.querySelectorAll('.priority-chip').forEach(c => {
+function selectPriority(p, route) {
+  state[route === 'lo' ? 'loPriority' : 'taskPriority'] = p;
+  const rowId = route === 'lo' ? 'loPriorityRow' : 'taskPriorityRow';
+  document.querySelectorAll('#' + rowId + ' .priority-chip').forEach(c => {
     c.className = 'priority-chip';
-    const label = c.textContent.replace(/[🔴🟡🔵]/g, '').trim();
-    if (label === p) {
-      c.className = 'priority-chip selected-' + p.toLowerCase();
-    }
+    const label = c.textContent.replace(/[🚨🔴🟡🔵]/g,'').trim();
+    if (label === p) c.className = 'priority-chip sel-' + p.toLowerCase();
   });
+}
+
+function onProjectChange() {
+  const projectId = document.getElementById('taskProject').value;
+  const milestoneSelect = document.getElementById('taskMilestone');
+  milestoneSelect.innerHTML = '';
+  if (!projectId) {
+    milestoneSelect.innerHTML = '<option value="">— select a project first —</option>';
+    milestoneSelect.disabled = true;
+    return;
+  }
+  const milestones = MILESTONES[projectId] || [];
+  if (milestones.length === 0) {
+    milestoneSelect.innerHTML = '<option value="">— no milestones found —</option>';
+    milestoneSelect.disabled = true;
+  } else {
+    milestoneSelect.innerHTML = '<option value="">— select a milestone —</option>';
+    milestones.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      milestoneSelect.appendChild(opt);
+    });
+    milestoneSelect.disabled = false;
+  }
 }
 
 // ─── Claude call ─────────────────────────────────────────────────────────────
@@ -965,35 +660,31 @@ async function runClaude() {
   btnRow.style.display = 'none';
   output.textContent = 'Analyzing your input...';
 
-  const routeContext = {
-    lo: `This is a Luminate Online (LO) work item. Type: ${state.loType}. Priority: ${state.loPriority}. Due: ${state.loDate || 'not specified'}.`,
-    project: `This is a DevISO Project Ticket (type: ${state.projectType}) that will go through the PI Planning workflow.`,
-    unsure: `Route is unknown — determine whether this should be an LO Work Item (standalone Luminate task) or a Project Ticket (PI Planning). Recommend one.`
-  }[state.route];
+  let routeContext;
+  if (state.route === 'lo') {
+    routeContext = `This is a Luminate Online (LO) work item. Type: ${state.loType}. Priority: ${state.loPriority}. Due: ${state.loDate || 'not specified'}.`;
+  } else {
+    routeContext = `This is a Task Tracker task under project "${state.taskProjectName}", milestone "${state.taskMilestoneName}". Task Type: ${state.taskType}. Priority: ${state.taskPriority}. Effort: ${state.taskEffort || 'not specified'}.`;
+  }
 
-  const systemPrompt = `You are a ticket-writing assistant for the DevISO team at Memorial Sloan Kettering Cancer Center. You help translate rough notes into well-structured Airtable tickets.
+  const systemPrompt = `You are a ticket-writing assistant for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
 
 CRITICAL RULES:
-1. Never ask clarifying questions. Draft the best possible ticket from the input. Where information is missing, make a reasonable default or note it in the description.
+1. Never ask clarifying questions. Draft the best possible ticket from the input. Fill gaps with reasonable defaults.
 2. Return ONLY valid JSON — no markdown, no explanation, no preamble.
-3. If route is "unsure", determine the right route in your response.
 
-Context about the team:
-- LO = Luminate Online by Blackbaud — the peer-to-peer fundraising and email platform
+Team context:
+- LO = Luminate Online by Blackbaud (peer-to-peer fundraising, email, event ticketing)
 - Programs: Cycle for Survival (CFS), Fred's Team, Comedy vs. Cancer
-- Project tickets go through scoring (T1/T2/T3) and PI Planning
-- LO work items are standalone tasks: config changes, content updates, bugs, campaign setups, enhancements
+- Task Tracker tasks are discrete units of work within a project milestone
 
 ${routeContext}
 
-Respond with this JSON structure (fill all fields; use null for optional fields that are truly unknown):
+Return this JSON structure exactly:
 {
-  "route": "lo" or "project",
-  "name": "concise title (max 60 chars)",
-  "description": "clear, complete description — include context, what needs to happen, and definition of done. 2-4 sentences.",
-  "type": "for LO: one of Enhancement/Bug/Config Change/Content Update/Campaign Setup/Spike-Audit/Other. For project: one of Enhancement/New Project/Discovery/Optimization/Maintenance/Strategic Planning",
-  "priority": "High/Medium/Low",
-  "flags": ["array of strings — genuine concerns only, max 3. Empty array if nothing to flag. Do NOT list missing-but-inferrable info."]
+  "name": "concise task title (max 60 chars)",
+  "description": "2-4 sentence description covering: what needs to happen, relevant context, and definition of done.",
+  "flags": ["genuine concerns only, max 3. Empty array if nothing to flag."]
 }`;
 
   try {
@@ -1011,23 +702,14 @@ Respond with this JSON structure (fill all fields; use null for optional fields 
 
     const data = await res.json();
     let text = '';
-    for (const block of data.content) {
-      if (block.type === 'text') text += block.text;
-    }
-
-    // Strip any accidental markdown fences
+    for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(text);
-    state.claudeDraft = parsed;
-
-    // If route was unsure, update it
-    if (state.route === 'unsure') state.route = parsed.route || 'lo';
+    state.claudeDraft = JSON.parse(text);
 
     output.textContent = '✓ Draft complete — reviewing with you next.';
     dot.className = 'claude-dot done';
     statusEl.textContent = 'claude-sonnet-4-6 · done';
     btnRow.style.display = 'flex';
-
   } catch (err) {
     output.textContent = 'Error: ' + err.message + '\n\nCheck your network or try again.';
     dot.className = 'claude-dot';
@@ -1040,15 +722,14 @@ Respond with this JSON structure (fill all fields; use null for optional fields 
 function buildReviewUI() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
+  const isTask = state.route === 'task';
 
-  // Destination chip
   const chip = document.getElementById('destinationChip');
-  chip.className = 'destination-chip ' + (isLO ? 'lo' : 'project');
+  chip.className = 'destination-chip ' + (isLO ? 'lo' : 'task');
   chip.innerHTML = isLO
     ? '⚙️ &nbsp;LO Work Items → Project Dashboard'
-    : '🗂️ &nbsp;Projects → PI Planning';
+    : '📋 &nbsp;Task Tracker → Project Dashboard';
 
-  // Flags
   const flagsBox = document.getElementById('flagsBox');
   const flagsList = document.getElementById('flagsList');
   if (draft.flags && draft.flags.length > 0) {
@@ -1058,7 +739,6 @@ function buildReviewUI() {
     flagsBox.classList.add('hidden');
   }
 
-  // Review fields
   const container = document.getElementById('reviewFields');
   container.innerHTML = '';
 
@@ -1066,11 +746,9 @@ function buildReviewUI() {
     const div = document.createElement('div');
     div.className = 'review-field';
     div.innerHTML = `<div class="review-field-label">${label}</div>`;
-
     if (editable) {
       if (multiline) {
         const ta = document.createElement('textarea');
-        ta.className = 'review-field-value editable';
         ta.style.cssText = 'display:block;width:100%;min-height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;line-height:1.5;resize:vertical;outline:none;';
         ta.value = value || '';
         ta.oninput = () => { state.claudeDraft[key] = ta.value; };
@@ -1080,7 +758,6 @@ function buildReviewUI() {
       } else {
         const inp = document.createElement('input');
         inp.type = 'text';
-        inp.className = 'review-field-value editable';
         inp.style.cssText = 'display:block;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;';
         inp.value = value || '';
         inp.oninput = () => { state.claudeDraft[key] = inp.value; };
@@ -1094,34 +771,33 @@ function buildReviewUI() {
       vdiv.textContent = value || '—';
       div.appendChild(vdiv);
     }
-
     container.appendChild(div);
   }
 
   addField('Title', 'name', draft.name);
   addField('Description', 'description', draft.description, true, true);
-  addField('Type', 'type', draft.type, false);
-  addField('Priority', 'priority', draft.priority, false);
-  if (isLO && state.loAssignee) {
-    const names = {
-      'usrHDiOwOhzbuyo1O': 'Brandy Reppy',
-      'usrzYY7pFg8lOJb0J': 'Christopher Hunt',
-      'usrPFuHJv46zLd3y8': 'Daniel Krumm',
-      'usrqwC3IkGokBadPj': 'Erik Haunold',
-      'usrtnu1LRTEDVvQwd': 'Hooria Tariq',
-      'usr2Nyfv2evA55oG9': 'Shannon Kenney',
-      'usrWhUIlixwJvXU4g': 'Nicole Thurgood'
-    };
-    addField('Assignee', 'assignee', names[state.loAssignee] || state.loAssignee, false);
-  }
-  if (isLO && state.loDate) addField('Due Date', 'loDate', state.loDate, false);
 
-  // Submit button color
+  if (isLO) {
+    addField('Type', 'type', state.loType, false);
+    addField('Priority', 'priority', state.loPriority, false);
+    if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee] || state.loAssignee, false);
+    if (state.loDate) addField('Due Date', '_', state.loDate, false);
+  } else {
+    addField('Project', '_', state.taskProjectName, false);
+    addField('Milestone', '_', state.taskMilestoneName, false);
+    addField('Task Type', '_', state.taskType, false);
+    addField('Priority', '_', state.taskPriority, false);
+    if (state.taskEffort) addField('Effort', '_', state.taskEffort, false);
+    if (state.taskAssignee) addField('Assignee', '_', TEAM_NAMES[state.taskAssignee] || state.taskAssignee, false);
+    if (state.taskStart) addField('Start Date', '_', state.taskStart, false);
+    if (state.taskDue) addField('Due Date', '_', state.taskDue, false);
+  }
+
   const submitBtn = document.getElementById('submitBtn');
-  submitBtn.className = 'btn-primary' + (isLO ? ' btn-lo' : '');
+  submitBtn.className = 'btn-primary' + (isLO ? ' btn-lo' : ' btn-task');
 }
 
-// ─── Submit to Airtable ───────────────────────────────────────────────────────
+// ─── Submit ───────────────────────────────────────────────────────────────────
 async function submitTicket() {
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
@@ -1129,35 +805,32 @@ async function submitTicket() {
 
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
-  const dest = BASES[isLO ? 'lo' : 'project'];
+  const dest = BASES[state.route];
 
   let fields;
   if (isLO) {
     fields = {
       'Name': draft.name || 'Untitled',
       'Description': draft.description || '',
-      'Type': draft.type || 'Other',
-      'Priority': draft.priority || 'Medium',
-      'Status': 'Backlog'
+      'Type': state.loType || 'Other',
+      'Priority': state.loPriority || 'Medium',
+      'Status': 'Backlog',
     };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [{ id: state.loAssignee }];
   } else {
-    const typeMap = {
-      'Enhancement': 'Enhancement', 'New Project': 'New Project',
-      'Discovery': 'Discovery', 'Optimization': 'Optimization',
-      'Maintenance': 'Maintenance', 'Strategic Planning': 'Strategic Planning'
-    };
-    const today = new Date().toISOString().split('T')[0];
     fields = {
-      'Project Name': draft.name || 'Untitled',
-      'Outcome Description': draft.description || '',
-      'Type of Request': typeMap[draft.type] || 'Enhancement',
-      'Status': 'Submitted',
-      'Work Type': 'PI Request',
-      'Date Submitted': today,
-      'Request Contact': 'Brandy Reppy'
+      'Task Name': draft.name || 'Untitled',
+      'Description': draft.description || '',
+      'Task Type': state.taskType || 'Work Ticket',
+      'Priority': state.taskPriority || 'Medium',
+      'Status': 'Not Started',
+      'Related Milestone': [{ id: state.taskMilestone }],
     };
+    if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
+    if (state.taskAssignee) fields['Assignee'] = [{ id: state.taskAssignee }];
+    if (state.taskStart) fields['Start date'] = state.taskStart;
+    if (state.taskDue) fields['Due Date'] = state.taskDue;
   }
 
   try {
@@ -1166,16 +839,14 @@ async function submitTicket() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields })
     });
-
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Airtable error');
+    if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'Airtable error');
 
-    // Success
-    document.getElementById('successSub').textContent =
-      isLO ? 'Added to LO Work Items in Project Dashboard.' : 'Submitted to Projects in PI Planning.';
+    document.getElementById('successSub').textContent = isLO
+      ? 'Added to LO Work Items in Project Dashboard.'
+      : `Added to Task Tracker under "${state.taskMilestoneName}".`;
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
     showStep('success');
-
   } catch (err) {
     btn.disabled = false;
     btn.textContent = 'Create Ticket ✓';
@@ -1184,27 +855,25 @@ async function submitTicket() {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function startOver() {
-  state = { route: null, loType: null, loPriority: null, loDate: null, loAssignee: null, projectType: null, description: '', claudeDraft: null, currentStep: 1 };
-  // Reset UI
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', description: '', claudeDraft: null };
   document.getElementById('routeLO').className = 'route-card';
-  document.getElementById('routeProject').className = 'route-card';
-  document.getElementById('routeUnsure').className = 'not-sure-btn';
+  document.getElementById('routeTask').className = 'route-card';
   document.getElementById('step1Next').disabled = true;
   document.getElementById('workDescription').value = '';
-  document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  if (document.getElementById('loAssignee')) document.getElementById('loAssignee').value = '';
-  if (document.getElementById('loDate')) document.getElementById('loDate').value = '';
-  if (document.getElementById('projectType')) document.getElementById('projectType').value = '';
+  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
+  document.getElementById('taskMilestone').disabled = true;
   showStep(1);
 }
 
-// ─── Init ────────────────────────────────────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────────────────────────────
 updateProgress(1);
 </script>
 </body>
