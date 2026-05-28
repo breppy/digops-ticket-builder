@@ -425,7 +425,7 @@
         </div>
         <div class="field-group" style="margin-bottom:0">
           <div class="field-label">Assignee <span class="opt">optional</span></div>
-          <select id="loAssignee">
+          <select id="loAssignee" onchange="onAssigneeChange('lo')">
             <option value="">— unassigned —</option>
             <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
             <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
@@ -440,8 +440,9 @@
       <div class="card">
         <div class="card-title">Scheduling</div>
         <div class="field-group" style="margin-bottom:0">
-          <div class="field-label">Due date <span class="opt">optional</span></div>
+          <div class="field-label">Due date <span class="opt" id="loDateOpt">optional</span><span class="req hidden" id="loDateReq">required</span></div>
           <input type="date" id="loDate">
+          <div class="hint hidden" id="loDateHint">Required when assigned</div>
         </div>
       </div>
     </div>
@@ -512,7 +513,7 @@
         </div>
         <div class="field-group" style="margin-bottom:0">
           <div class="field-label">Assignee <span class="opt">optional</span></div>
-          <select id="taskAssignee">
+          <select id="taskAssignee" onchange="onAssigneeChange('task')">
             <option value="">— unassigned —</option>
             <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
             <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
@@ -533,8 +534,9 @@
             <input type="date" id="taskStart">
           </div>
           <div class="field-group" style="margin-bottom:0">
-            <div class="field-label">Due date <span class="opt">optional</span></div>
+            <div class="field-label">Due date <span class="opt" id="taskDueOpt">optional</span><span class="req hidden" id="taskDueReq">required</span></div>
             <input type="date" id="taskDue">
+            <div class="hint hidden" id="taskDueHint">Required when assigned</div>
           </div>
         </div>
       </div>
@@ -758,6 +760,7 @@ function goToStep3fresh() {
     if (!state.loPriority) { alert('Please select a priority.'); return; }
     state.loDate = document.getElementById('loDate').value;
     state.loAssignee = document.getElementById('loAssignee').value;
+    if (state.loAssignee && !state.loDate) { alert('Due date is required when an assignee is selected.'); return; }
   } else {
     if (!document.getElementById('taskProject').value) { alert('Please select a project.'); return; }
     if (!document.getElementById('taskMilestone').value) { alert('Please select a milestone.'); return; }
@@ -771,6 +774,7 @@ function goToStep3fresh() {
     state.taskAssignee = document.getElementById('taskAssignee').value;
     state.taskStart = document.getElementById('taskStart').value;
     state.taskDue = document.getElementById('taskDue').value;
+    if (state.taskAssignee && !state.taskDue) { alert('Due date is required when an assignee is selected.'); return; }
   }
   state.description = desc;
   showStep(3);
@@ -809,6 +813,16 @@ function selectPriority(p, route) {
     const label = c.textContent.replace(/[🚨🔴🟡🔵]/g,'').trim();
     if (label === p) c.className = 'priority-chip sel-' + p.toLowerCase();
   });
+}
+
+function onAssigneeChange(route) {
+  const hasAssignee = document.getElementById(route === 'lo' ? 'loAssignee' : 'taskAssignee').value !== '';
+  const optId = route === 'lo' ? 'loDateOpt' : 'taskDueOpt';
+  const reqId = route === 'lo' ? 'loDateReq' : 'taskDueReq';
+  const hintId = route === 'lo' ? 'loDateHint' : 'taskDueHint';
+  document.getElementById(optId).classList.toggle('hidden', hasAssignee);
+  document.getElementById(reqId).classList.toggle('hidden', !hasAssignee);
+  document.getElementById(hintId).classList.toggle('hidden', !hasAssignee);
 }
 
 function onProjectChange() {
@@ -1023,7 +1037,7 @@ async function submitTicket() {
   const dest = BASES[state.route];
   let fields;
   if (isLO) {
-    fields = { 'Name': draft.name || 'Untitled', 'Description': draft.description || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': 'Backlog' };
+    fields = { 'Name': draft.name || 'Untitled', 'Description': draft.description || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [{ id: state.loAssignee }];
   } else {
