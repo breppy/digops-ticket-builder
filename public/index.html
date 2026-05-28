@@ -369,7 +369,7 @@
     <div class="btn-row">
       <button class="btn-back" onclick="goToStep1()">← Back</button>
       <div style="flex:1"></div>
-      <button class="btn-primary" id="step2Next" onclick="goToStep3()">Draft with Claude →</button>
+      <button class="btn-primary" id="step2Next" onclick="goToStep3fresh()">Draft with Claude →</button>
     </div>
   </div>
 
@@ -408,7 +408,7 @@
     </div>
     <div id="reviewFields"></div>
     <div class="btn-row">
-      <button class="btn-back" onclick="goToStep3()">← Back</button>
+      <button class="btn-back" onclick="goToStep2()">← Back</button>
       <div style="flex:1"></div>
       <button class="btn-primary" id="submitBtn" onclick="submitTicket()">Create Ticket ✓</button>
     </div>
@@ -562,6 +562,16 @@ function goToStep2() {
 }
 
 function goToStep3() {
+  showStep(3);
+  if (state.claudeDraft) {
+    document.getElementById('claudeOutput').textContent = '✓ Draft complete — reviewing with you next.';
+    document.getElementById('claudeDot').className = 'claude-dot done';
+    document.getElementById('claudeStatus').textContent = 'claude-sonnet-4-6 · done';
+    document.getElementById('step3BtnRow').style.display = 'flex';
+  }
+}
+
+function goToStep3fresh() {
   const desc = document.getElementById('workDescription').value.trim();
   if (!desc) { alert('Please add a description.'); return; }
 
