@@ -445,11 +445,11 @@ async function submitTicket() {
   if (isLO) {
     fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
-    if (state.loAssignee) fields['Assignee'] = [{ id: state.loAssignee }];
+    if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
   } else {
-    fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [{ id: state.taskMilestone }] };
+    fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
-    if (state.taskAssignee) fields['Assignee'] = [{ id: state.taskAssignee }];
+    if (state.taskAssignee) fields['Assignee'] = [state.taskAssignee];
     if (state.taskStart) fields['Start date'] = state.taskStart;
     if (state.taskDue) fields['Due Date'] = state.taskDue;
   }
