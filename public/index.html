@@ -4,155 +4,319 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ticket Builder — DevISO Digital Operations</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f0f11;
-    --surface: #18181c;
-    --surface2: #222228;
-    --border: #2e2e38;
-    --border-hi: #45454f;
-    --accent: #e8541a;
-    --accent-dim: rgba(232,84,26,0.15);
-    --accent-hover: #f06030;
-    --text: #e8e8ec;
-    --text-dim: #8888a0;
-    --text-dimmer: #55556a;
-    --success: #2ecc71;
-    --success-dim: rgba(46,204,113,0.12);
-    --warn: #f0a500;
-    --warn-dim: rgba(240,165,0,0.12);
-    --lo-color: #7c6ef5;
-    --lo-dim: rgba(124,110,245,0.15);
-    --task-color: #2ecc71;
-    --task-dim: rgba(46,204,113,0.12);
-    --project-color: #e8541a;
-    --project-dim: rgba(232,84,26,0.15);
-    --radius: 8px;
-    --radius-lg: 12px;
+    --navy: #002569;
+    --navy-dark: #001a4a;
+    --navy-dim: rgba(0,37,105,0.08);
+    --navy-mid: rgba(0,37,105,0.15);
+    --blue: #0057b8;
+    --blue-dim: rgba(0,87,184,0.1);
+    --blue-hover: #0047a0;
+    --white: #ffffff;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --border: #d0d5de;
+    --border-hi: #a0a8bb;
+    --text: #0d1b3e;
+    --text-dim: #4a5568;
+    --text-dimmer: #8896a8;
+    --success: #1a7f4b;
+    --success-bg: #e8f5ee;
+    --warn: #b45309;
+    --warn-bg: #fef3e2;
+    --warn-border: rgba(180,83,9,0.25);
+    --danger: #c0392b;
+    --lo-color: #5c3d9e;
+    --lo-dim: rgba(92,61,158,0.1);
+    --lo-border: rgba(92,61,158,0.4);
+    --task-color: #1a7f4b;
+    --task-dim: rgba(26,127,75,0.1);
+    --task-border: rgba(26,127,75,0.4);
+    --radius: 6px;
+    --radius-lg: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,37,105,0.08), 0 1px 2px rgba(0,37,105,0.05);
+    --shadow: 0 2px 8px rgba(0,37,105,0.1), 0 1px 3px rgba(0,37,105,0.06);
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
 
-  header { border-bottom: 1px solid var(--border); padding: 0 32px; height: 52px; display: flex; align-items: center; background: var(--surface); position: sticky; top: 0; z-index: 10; gap: 16px; }
-  .logo-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; color: white; letter-spacing: -0.5px; flex-shrink: 0; }
-  .header-title { font-size: 13px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.02em; }
-  .header-title span { color: var(--text); }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 24px 80px; }
-  .builder { width: 100%; max-width: 680px; }
+  /* Header */
+  header {
+    background: var(--navy);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .msk-symbol {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  .header-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255,255,255,0.25);
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .header-title span { color: white; }
 
-  .step-header { margin-bottom: 32px; }
-  .step-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-dimmer); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
-  .step-title { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.3; }
-  .step-sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+  /* Main */
+  main {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 24px 80px;
+  }
+  .builder { width: 100%; max-width: 660px; }
 
-  /* Route grid — 3 cards */
+  /* Step header */
+  .step-header { margin-bottom: 28px; }
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dimmer);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .step-title { font-size: 22px; font-weight: bold; color: var(--navy); line-height: 1.3; }
+  .step-sub { font-size: 13px; color: var(--text-dim); margin-top: 5px; }
+
+  /* Progress */
+  .progress { display: flex; align-items: center; gap: 6px; margin-bottom: 28px; }
+  .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
+  .progress-dot.active { background: var(--navy); transform: scale(1.25); }
+  .progress-dot.done { background: var(--success); }
+  .progress-line { flex: 1; height: 2px; background: var(--border); max-width: 40px; }
+
+  /* Route grid */
   .route-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
-  .route-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 16px; cursor: pointer; transition: all 0.15s ease; text-align: left; position: relative; }
-  .route-card:hover { border-color: var(--border-hi); background: var(--surface2); }
+  .route-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+  .route-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
   .route-card.sel-lo { border-color: var(--lo-color); background: var(--lo-dim); }
   .route-card.sel-task { border-color: var(--task-color); background: var(--task-dim); }
-  .route-card.sel-project { border-color: var(--accent); background: var(--accent-dim); }
-  .route-card-icon { font-size: 20px; margin-bottom: 8px; display: block; }
-  .route-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .route-card-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+  .route-card-title { font-size: 13px; font-weight: bold; color: var(--navy); margin-bottom: 4px; }
   .route-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
-  .route-badge { position: absolute; top: 10px; right: 10px; font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 4px; opacity: 0; transition: opacity 0.15s; }
+  .route-badge {
+    position: absolute; top: 10px; right: 10px;
+    font-family: 'DM Mono', monospace; font-size: 9px; font-weight: bold;
+    padding: 2px 7px; border-radius: 20px; opacity: 0; transition: opacity 0.15s;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
   .sel-lo .route-badge { opacity: 1; background: var(--lo-color); color: white; }
-  .sel-task .route-badge { opacity: 1; background: var(--task-color); color: #0f0f11; }
-  .sel-project .route-badge { opacity: 1; background: var(--accent); color: white; }
-
-  /* Coming soon card */
-  .route-card.coming-soon { opacity: 0.45; cursor: default; }
-  .route-card.coming-soon:hover { border-color: var(--border); background: var(--surface); }
-  .coming-soon-tag { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dimmer); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; display: block; }
+  .sel-task .route-badge { opacity: 1; background: var(--task-color); color: white; }
+  .route-card.coming-soon { opacity: 0.4; cursor: default; }
+  .route-card.coming-soon:hover { border-color: var(--border); box-shadow: var(--shadow-sm); }
+  .coming-soon-tag { font-size: 10px; color: var(--text-dimmer); margin-top: 8px; display: block; font-style: italic; }
 
   /* Type chips */
   .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-  .type-chip { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; text-align: left; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
-  .type-chip:hover { border-color: var(--border-hi); }
+  .type-chip {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: Arial, sans-serif;
+    box-shadow: var(--shadow-sm);
+  }
+  .type-chip:hover { border-color: var(--navy); }
   .type-chip.selected-lo { border-color: var(--lo-color); background: var(--lo-dim); }
   .type-chip.selected-task { border-color: var(--task-color); background: var(--task-dim); }
   .type-chip-icon { font-size: 15px; display: block; margin-bottom: 4px; }
-  .type-chip-label { font-size: 12px; font-weight: 500; color: var(--text); }
+  .type-chip-label { font-size: 12px; font-weight: bold; color: var(--text); }
 
   /* Priority */
   .priority-row { display: flex; gap: 8px; }
-  .priority-chip { flex: 1; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 500; color: var(--text-dim); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
-  .priority-chip:hover { border-color: var(--border-hi); color: var(--text); }
-  .priority-chip.sel-critical { border-color: #e55; background: rgba(238,85,85,0.12); color: #e55; }
-  .priority-chip.sel-high { border-color: #e8541a; background: rgba(232,84,26,0.12); color: #e8541a; }
-  .priority-chip.sel-medium { border-color: var(--warn); background: var(--warn-dim); color: var(--warn); }
-  .priority-chip.sel-low { border-color: #5599ee; background: rgba(85,153,238,0.12); color: #5599ee; }
+  .priority-chip {
+    flex: 1; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 9px 10px; cursor: pointer;
+    text-align: center; font-size: 12px; font-weight: bold; color: var(--text-dim);
+    font-family: Arial, sans-serif; transition: all 0.15s; box-shadow: var(--shadow-sm);
+  }
+  .priority-chip:hover { border-color: var(--navy); color: var(--text); }
+  .priority-chip.sel-critical { border-color: #c0392b; background: #fdf0ee; color: #c0392b; }
+  .priority-chip.sel-high { border-color: #d35400; background: #fef3ec; color: #d35400; }
+  .priority-chip.sel-medium { border-color: #b45309; background: var(--warn-bg); color: var(--warn); }
+  .priority-chip.sel-low { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
 
   /* Form fields */
   .field-group { margin-bottom: 16px; }
-  .field-label { font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-  .field-label .req { color: var(--accent); font-size: 10px; }
-  .field-label .opt { color: var(--text-dimmer); font-size: 10px; font-family: 'DM Mono', monospace; }
-  input[type="text"], input[type="date"], textarea, select { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s; resize: vertical; }
-  input[type="text"]:focus, input[type="date"]:focus, textarea:focus, select:focus { border-color: var(--border-hi); }
-  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+  .field-label { font-size: 12px; font-weight: bold; color: var(--text); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+  .field-label .req { color: var(--danger); font-size: 11px; font-weight: normal; }
+  .field-label .opt { color: var(--text-dimmer); font-size: 11px; font-weight: normal; }
+  input[type="text"], input[type="date"], textarea, select {
+    width: 100%; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 9px 12px; color: var(--text);
+    font-family: Arial, sans-serif; font-size: 14px; outline: none;
+    transition: border-color 0.15s; resize: vertical;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+  }
+  input[type="text"]:focus, input[type="date"]:focus, textarea:focus, select:focus {
+    border-color: var(--navy); box-shadow: 0 0 0 3px rgba(0,37,105,0.1);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
   textarea { min-height: 120px; }
-  select option { background: var(--surface2); }
   .hint { font-size: 11px; color: var(--text-dimmer); margin-top: 4px; font-family: 'DM Mono', monospace; }
 
-  /* Cascade selects */
-  .cascade-group { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; }
-  .cascade-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dimmer); margin-bottom: 8px; }
+  /* Card container */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--navy-dim);
+  }
+
+  /* Cascade */
+  .cascade-group {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .cascade-label {
+    font-size: 11px; font-weight: bold; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px;
+  }
 
   /* Claude card */
-  .claude-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-  .claude-header { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
-  .claude-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+  .claude-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .claude-header {
+    background: var(--navy); padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: rgba(255,255,255,0.8);
+    font-family: 'DM Mono', monospace;
+  }
+  .claude-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-  .claude-dot.done { background: var(--success); animation: none; }
+  .claude-dot.done { background: #4ade80; animation: none; }
   .claude-body { padding: 16px; font-size: 13px; color: var(--text-dim); font-family: 'DM Mono', monospace; line-height: 1.7; min-height: 80px; }
 
-  /* Review */
+  /* Review fields */
   .review-field { margin-bottom: 12px; }
-  .review-field-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dimmer); margin-bottom: 4px; }
-  .review-field-value { font-size: 13px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .review-field-label {
+    font-size: 11px; font-weight: bold; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px;
+  }
+  .review-field-value {
+    font-size: 13px; color: var(--text); background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 8px 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+  }
 
   /* Flags */
-  .flags-box { background: var(--warn-dim); border: 1px solid rgba(240,165,0,0.3); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; }
-  .flags-box-label { font-size: 11px; font-weight: 600; color: var(--warn); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .flags-box {
+    background: var(--warn-bg); border: 1.5px solid var(--warn-border);
+    border-left: 4px solid var(--warn);
+    border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px;
+  }
+  .flags-box-label { font-size: 11px; font-weight: bold; color: var(--warn); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
   .flags-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-  .flags-list li { font-size: 12px; color: var(--text); display: flex; align-items: flex-start; gap: 6px; line-height: 1.5; }
-  .flags-list li::before { content: '⚑'; color: var(--warn); flex-shrink: 0; margin-top: 1px; }
+  .flags-list li { font-size: 12px; color: var(--text); display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+  .flags-list li::before { content: '▲'; color: var(--warn); flex-shrink: 0; margin-top: 2px; font-size: 9px; }
 
   /* Destination chip */
-  .destination-chip { display: inline-flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 20px; margin-bottom: 20px; }
-  .destination-chip.lo { background: var(--lo-dim); border: 1px solid var(--lo-color); color: var(--lo-color); }
-  .destination-chip.task { background: var(--task-dim); border: 1px solid var(--task-color); color: var(--task-color); }
-  .destination-chip.project { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); }
+  .destination-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: bold; padding: 4px 12px;
+    border-radius: 20px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .destination-chip.lo { background: var(--lo-dim); border: 1.5px solid var(--lo-border); color: var(--lo-color); }
+  .destination-chip.task { background: var(--task-dim); border: 1.5px solid var(--task-border); color: var(--task-color); }
+
+  /* Divider */
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
   /* Buttons */
   .btn-row { display: flex; gap: 10px; margin-top: 24px; align-items: center; }
-  .btn-back { background: none; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 18px; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-  .btn-back:hover { border-color: var(--border-hi); color: var(--text); }
-  .btn-primary { background: var(--accent); border: none; border-radius: var(--radius); padding: 10px 22px; color: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
-  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-back {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 10px 20px; color: var(--text-dim);
+    font-family: Arial, sans-serif; font-size: 13px; font-weight: bold;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-back:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-primary {
+    background: var(--navy); border: none; border-radius: var(--radius);
+    padding: 10px 24px; color: white; font-family: Arial, sans-serif;
+    font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover { background: var(--navy-dark); box-shadow: var(--shadow); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-lo { background: var(--lo-color); }
-  .btn-lo:hover { background: #9080ff; }
-  .btn-task { background: #27ae60; }
-  .btn-task:hover { background: #2ecc71; }
-
-  /* Progress */
-  .progress { display: flex; align-items: center; gap: 6px; margin-bottom: 32px; }
-  .progress-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
-  .progress-dot.active { background: var(--accent); transform: scale(1.3); }
-  .progress-dot.done { background: var(--success); }
-  .progress-line { flex: 1; height: 1px; background: var(--border); max-width: 40px; }
+  .btn-lo:hover { background: #4a2d8a; }
+  .btn-task { background: var(--task-color); }
+  .btn-task:hover { background: #155f38; }
 
   /* Success */
   .success-screen { text-align: center; padding: 60px 24px; }
-  .success-icon { font-size: 48px; margin-bottom: 16px; }
-  .success-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-  .success-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 28px; }
-  .success-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dimmer); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px; display: inline-block; margin-bottom: 28px; }
+  .success-icon { font-size: 52px; margin-bottom: 16px; }
+  .success-title { font-size: 22px; font-weight: bold; color: var(--navy); margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 28px; }
+  .success-id {
+    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-dimmer);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 8px 16px; display: inline-block; margin-bottom: 28px;
+  }
 
   .hidden { display: none !important; }
   .step { display: none; }
@@ -160,7 +324,7 @@
 
   @media (max-width: 600px) {
     header { padding: 0 16px; }
-    main { padding: 32px 16px 60px; }
+    main { padding: 28px 16px 60px; }
     .route-grid { grid-template-columns: 1fr; }
     .type-grid { grid-template-columns: repeat(2, 1fr); }
   }
@@ -169,14 +333,20 @@
 <body>
 
 <header>
-  <div class="logo-mark">DO</div>
-  <div class="header-title">Memorial Sloan Kettering / <span>Ticket Builder</span></div>
+  <div class="header-logo">
+    <svg class="msk-symbol" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="15" stroke="white" stroke-width="1.5"/>
+      <path d="M16 6 L16 26 M10 11 L16 6 L22 11" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span style="font-size:14px;font-weight:bold;color:white;letter-spacing:0.02em">Memorial Sloan Kettering</span>
+  </div>
+  <div class="header-divider"></div>
+  <div class="header-title">DevISO / <span>Ticket Builder</span></div>
 </header>
 
 <main>
 <div class="builder">
 
-  <!-- Progress -->
   <div class="progress" id="progressBar">
     <div class="progress-dot" id="dot1"></div>
     <div class="progress-line"></div>
@@ -187,7 +357,7 @@
     <div class="progress-dot" id="dot4"></div>
   </div>
 
-  <!-- STEP 1: Route -->
+  <!-- STEP 1 -->
   <div class="step active" id="step1">
     <div class="step-header">
       <div class="step-label">Step 1 of 4</div>
@@ -208,7 +378,7 @@
         <div class="route-card-title">Project Task</div>
         <div class="route-card-desc">A task that belongs to an existing project and milestone in the Task Tracker.</div>
       </button>
-      <button class="route-card coming-soon" id="routeProject" disabled>
+      <button class="route-card coming-soon" disabled>
         <span class="route-card-icon">🗂️</span>
         <div class="route-card-title">New Project</div>
         <div class="route-card-desc">New initiative through PI Planning and DevISO scoring.</div>
@@ -222,7 +392,7 @@
     </div>
   </div>
 
-  <!-- STEP 2: Details -->
+  <!-- STEP 2 -->
   <div class="step" id="step2">
     <div class="step-header">
       <div class="step-label">Step 2 of 4</div>
@@ -232,138 +402,151 @@
 
     <!-- LO fields -->
     <div id="loFields" class="hidden">
-      <div class="field-group">
-        <div class="field-label">Type <span class="req">required</span></div>
-        <div class="type-grid">
-          <button class="type-chip" onclick="selectType('Enhancement','lo')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
-          <button class="type-chip" onclick="selectType('Bug','lo')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
-          <button class="type-chip" onclick="selectType('Config Change','lo')"><span class="type-chip-icon">🔧</span><span class="type-chip-label">Config Change</span></button>
-          <button class="type-chip" onclick="selectType('Content Update','lo')"><span class="type-chip-icon">📝</span><span class="type-chip-label">Content Update</span></button>
-          <button class="type-chip" onclick="selectType('Campaign Setup','lo')"><span class="type-chip-icon">📣</span><span class="type-chip-label">Campaign Setup</span></button>
-          <button class="type-chip" onclick="selectType('Spike/Audit','lo')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike / Audit</span></button>
+      <div class="card">
+        <div class="card-title">Ticket Properties</div>
+        <div class="field-group">
+          <div class="field-label">Type <span class="req">required</span></div>
+          <div class="type-grid">
+            <button class="type-chip" onclick="selectType('Enhancement','lo')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
+            <button class="type-chip" onclick="selectType('Bug','lo')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
+            <button class="type-chip" onclick="selectType('Config Change','lo')"><span class="type-chip-icon">🔧</span><span class="type-chip-label">Config Change</span></button>
+            <button class="type-chip" onclick="selectType('Content Update','lo')"><span class="type-chip-icon">📝</span><span class="type-chip-label">Content Update</span></button>
+            <button class="type-chip" onclick="selectType('Campaign Setup','lo')"><span class="type-chip-icon">📣</span><span class="type-chip-label">Campaign Setup</span></button>
+            <button class="type-chip" onclick="selectType('Spike/Audit','lo')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike / Audit</span></button>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Priority <span class="req">required</span></div>
+          <div class="priority-row" id="loPriorityRow">
+            <button class="priority-chip" onclick="selectPriority('High','lo')">🔴 High</button>
+            <button class="priority-chip" onclick="selectPriority('Medium','lo')">🟡 Medium</button>
+            <button class="priority-chip" onclick="selectPriority('Low','lo')">🔵 Low</button>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Assignee <span class="opt">optional</span></div>
+          <select id="loAssignee">
+            <option value="">— unassigned —</option>
+            <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
+            <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
+            <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
+            <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
+            <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
+            <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
+            <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
+          </select>
         </div>
       </div>
-      <div class="field-group">
-        <div class="field-label">Priority <span class="req">required</span></div>
-        <div class="priority-row" id="loPriorityRow">
-          <button class="priority-chip" onclick="selectPriority('High','lo')">🔴 High</button>
-          <button class="priority-chip" onclick="selectPriority('Medium','lo')">🟡 Medium</button>
-          <button class="priority-chip" onclick="selectPriority('Low','lo')">🔵 Low</button>
+      <div class="card">
+        <div class="card-title">Scheduling</div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Due date <span class="opt">optional</span></div>
+          <input type="date" id="loDate">
         </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Assignee <span class="opt">optional</span></div>
-        <select id="loAssignee">
-          <option value="">— unassigned —</option>
-          <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
-          <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
-          <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
-          <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
-          <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
-          <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
-          <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Due date <span class="opt">optional</span></div>
-        <input type="date" id="loDate">
       </div>
     </div>
 
-    <!-- Task Tracker fields -->
+    <!-- Task fields -->
     <div id="taskFields" class="hidden">
+      <div class="card">
+        <div class="card-title">Project &amp; Milestone</div>
+        <div class="cascade-group">
+          <div class="cascade-label">Select project, then milestone</div>
+          <div class="field-group" style="margin-bottom:12px">
+            <div class="field-label">Project <span class="req">required</span></div>
+            <select id="taskProject" onchange="onProjectChange()">
+              <option value="">— select a project —</option>
+              <option value="rec8yRUa9H72G5kNc">CFS Captain Research Survey (Phase 1B)</option>
+              <option value="recZpRRs2uJRHOf96">Goal Accelerator (Cycle for Survival)</option>
+              <option value="recWhOZAtXp6ZUFZU">Goal Accelerator (Fred's Team)</option>
+              <option value="recnZewNDr6PxAKXw">Unified Measurement: GA4 &amp; GTM</option>
+              <option value="recfAzlI7JomtkxFp">CFS GA4 &amp; GTM Tracking</option>
+              <option value="recSK8fZgtLupqMPl">CFS Segmentation — Phase 1</option>
+              <option value="recz8QJHJUffBctmK">CFS27 Group Configuration &amp; Cleanup</option>
+              <option value="recyQIfAbntRkQ19A">LO Complete Cover</option>
+              <option value="recPUryoYZEkZyLOP">Email Preference Center &amp; Opt-Out</option>
+              <option value="recR3wzpfrxJGR4g1">LO Ticket Store UX</option>
+              <option value="recLvtgE1gRqfpMNL">Internal Projects</option>
+              <option value="recSx7fjCpqCKx8RE">Automation BAU</option>
+            </select>
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <div class="field-label">Milestone <span class="req">required</span></div>
+            <select id="taskMilestone" disabled>
+              <option value="">— select a project first —</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-      <div class="cascade-group">
-        <div class="cascade-label">Project & Milestone</div>
-        <div class="field-group" style="margin-bottom:12px">
-          <div class="field-label">Project <span class="req">required</span></div>
-          <select id="taskProject" onchange="onProjectChange()">
-            <option value="">— select a project —</option>
-            <option value="rec8yRUa9H72G5kNc">CFS Captain Research Survey (Phase 1B)</option>
-            <option value="recZpRRs2uJRHOf96">Goal Accelerator (Cycle for Survival)</option>
-            <option value="recWhOZAtXp6ZUFZU">Goal Accelerator (Fred's Team)</option>
-            <option value="recnZewNDr6PxAKXw">Unified Measurement Infrastructure: GA4 &amp; GTM</option>
-            <option value="recfAzlI7JomtkxFp">CFS GA4 &amp; GTM Tracking</option>
-            <option value="recSK8fZgtLupqMPl">CFS Segmentation — Phase 1</option>
-            <option value="recz8QJHJUffBctmK">CFS27 Group Configuration &amp; Cleanup</option>
-            <option value="recyQIfAbntRkQ19A">LO Complete Cover</option>
-            <option value="recPUryoYZEkZyLOP">Email Preference Center &amp; Opt-Out Remediation</option>
-            <option value="recR3wzpfrxJGR4g1">LO Ticket Store UX</option>
-            <option value="recLvtgE1gRqfpMNL">Internal Projects</option>
-            <option value="recSx7fjCpqCKx8RE">Automation BAU</option>
+      <div class="card">
+        <div class="card-title">Task Properties</div>
+        <div class="field-group">
+          <div class="field-label">Task Type <span class="req">required</span></div>
+          <div class="type-grid">
+            <button class="type-chip" onclick="selectType('Work Ticket','task')"><span class="type-chip-icon">🎫</span><span class="type-chip-label">Work Ticket</span></button>
+            <button class="type-chip" onclick="selectType('Bug','task')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
+            <button class="type-chip" onclick="selectType('Enhancement','task')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
+            <button class="type-chip" onclick="selectType('Spike','task')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike</span></button>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Priority <span class="req">required</span></div>
+          <div class="priority-row" id="taskPriorityRow">
+            <button class="priority-chip" onclick="selectPriority('Critical','task')">🚨 Critical</button>
+            <button class="priority-chip" onclick="selectPriority('High','task')">🔴 High</button>
+            <button class="priority-chip" onclick="selectPriority('Medium','task')">🟡 Medium</button>
+            <button class="priority-chip" onclick="selectPriority('Low','task')">🔵 Low</button>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Effort Size <span class="opt">optional</span></div>
+          <select id="taskEffort">
+            <option value="">— unknown —</option>
+            <option value="X-Small">X-Small (~2h)</option>
+            <option value="Small">Small (~4h)</option>
+            <option value="Medium">Medium (~8h)</option>
+            <option value="Large">Large (~16h)</option>
+            <option value="X-Large">X-Large (~32h)</option>
           </select>
         </div>
         <div class="field-group" style="margin-bottom:0">
-          <div class="field-label">Milestone <span class="req">required</span></div>
-          <select id="taskMilestone" disabled>
-            <option value="">— select a project first —</option>
+          <div class="field-label">Assignee <span class="opt">optional</span></div>
+          <select id="taskAssignee">
+            <option value="">— unassigned —</option>
+            <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
+            <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
+            <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
+            <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
+            <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
+            <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
+            <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
           </select>
         </div>
       </div>
 
-      <div class="field-group">
-        <div class="field-label">Task Type <span class="req">required</span></div>
-        <div class="type-grid">
-          <button class="type-chip" onclick="selectType('Work Ticket','task')"><span class="type-chip-icon">🎫</span><span class="type-chip-label">Work Ticket</span></button>
-          <button class="type-chip" onclick="selectType('Bug','task')"><span class="type-chip-icon">🐛</span><span class="type-chip-label">Bug</span></button>
-          <button class="type-chip" onclick="selectType('Enhancement','task')"><span class="type-chip-icon">✨</span><span class="type-chip-label">Enhancement</span></button>
-          <button class="type-chip" onclick="selectType('Spike','task')"><span class="type-chip-icon">🔬</span><span class="type-chip-label">Spike</span></button>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label">Priority <span class="req">required</span></div>
-        <div class="priority-row" id="taskPriorityRow">
-          <button class="priority-chip" onclick="selectPriority('Critical','task')">🚨 Critical</button>
-          <button class="priority-chip" onclick="selectPriority('High','task')">🔴 High</button>
-          <button class="priority-chip" onclick="selectPriority('Medium','task')">🟡 Medium</button>
-          <button class="priority-chip" onclick="selectPriority('Low','task')">🔵 Low</button>
-        </div>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label">Effort Size <span class="opt">optional</span></div>
-        <select id="taskEffort">
-          <option value="">— unknown —</option>
-          <option value="X-Small">X-Small (~2h)</option>
-          <option value="Small">Small (~4h)</option>
-          <option value="Medium">Medium (~8h)</option>
-          <option value="Large">Large (~16h)</option>
-          <option value="X-Large">X-Large (~32h)</option>
-        </select>
-      </div>
-
-      <div class="field-group">
-        <div class="field-label">Assignee <span class="opt">optional</span></div>
-        <select id="taskAssignee">
-          <option value="">— unassigned —</option>
-          <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
-          <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
-          <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
-          <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
-          <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
-          <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
-          <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
-        </select>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="field-group">
-          <div class="field-label">Start date <span class="opt">optional</span></div>
-          <input type="date" id="taskStart">
-        </div>
-        <div class="field-group">
-          <div class="field-label">Due date <span class="opt">optional</span></div>
-          <input type="date" id="taskDue">
+      <div class="card">
+        <div class="card-title">Scheduling</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field-group" style="margin-bottom:0">
+            <div class="field-label">Start date <span class="opt">optional</span></div>
+            <input type="date" id="taskStart">
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <div class="field-label">Due date <span class="opt">optional</span></div>
+            <input type="date" id="taskDue">
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Shared description -->
-    <div class="field-group">
-      <div class="field-label">Description <span class="req">required</span></div>
-      <textarea id="workDescription" placeholder="What needs to happen? What's the context? What does done look like?"></textarea>
-      <div class="hint">More context → fewer assumptions → faster ticket.</div>
+    <div class="card">
+      <div class="card-title">Description</div>
+      <div class="field-group" style="margin-bottom:0">
+        <textarea id="workDescription" placeholder="What needs to happen? What's the context? What does done look like?"></textarea>
+        <div class="hint" style="margin-top:6px">Rough notes are fine. More context → fewer assumptions → better ticket.</div>
+      </div>
     </div>
 
     <div class="btn-row">
@@ -373,7 +556,7 @@
     </div>
   </div>
 
-  <!-- STEP 3: Claude drafts -->
+  <!-- STEP 3 -->
   <div class="step" id="step3">
     <div class="step-header">
       <div class="step-label">Step 3 of 4</div>
@@ -390,23 +573,29 @@
     <div class="btn-row" id="step3BtnRow" style="display:none">
       <button class="btn-back" onclick="goToStep2()">← Revise input</button>
       <div style="flex:1"></div>
-      <button class="btn-primary" id="reviewBtn" onclick="goToStep4()">Review & Submit →</button>
+      <button class="btn-primary" id="reviewBtn" onclick="goToStep4()">Review &amp; Submit →</button>
     </div>
   </div>
 
-  <!-- STEP 4: Review & submit -->
+  <!-- STEP 4 -->
   <div class="step" id="step4">
     <div class="step-header">
       <div class="step-label">Step 4 of 4</div>
-      <div class="step-title">Review & Submit</div>
-      <div class="step-sub">Click any editable field to make changes before submitting.</div>
+      <div class="step-title">Review &amp; Submit</div>
+      <div class="step-sub">Click the title or description to edit before submitting.</div>
     </div>
+
     <div class="destination-chip" id="destinationChip"></div>
+
     <div class="flags-box hidden" id="flagsBox">
-      <div class="flags-box-label">Claude flagged the following</div>
+      <div class="flags-box-label">⚠ Claude flagged the following</div>
       <ul class="flags-list" id="flagsList"></ul>
     </div>
-    <div id="reviewFields"></div>
+
+    <div class="card">
+      <div id="reviewFields"></div>
+    </div>
+
     <div class="btn-row">
       <button class="btn-back" onclick="goToStep2()">← Back</button>
       <div style="flex:1"></div>
@@ -429,14 +618,11 @@
 </main>
 
 <script>
-// ─── Constants ───────────────────────────────────────────────────────────────
 const BASES = {
-  lo:      { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc' },
-  task:    { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww' },
-  project: { baseId: 'appSIf1E1ln0vIm48', tableId: 'tblUxLyobdJ0sP7Ow' }
+  lo:   { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc' },
+  task: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww' },
 };
 
-// Milestones keyed by project record ID
 const MILESTONES = {
   'rec8yRUa9H72G5kNc': [
     { id: 'recXWCPAmw2qjMgh4', name: 'Survey Design Finalization & Approval' },
@@ -515,20 +701,14 @@ const TEAM_NAMES = {
   'recmMouUvoEbbDi4y': 'Nicole Thurgood',
 };
 
-// ─── State ───────────────────────────────────────────────────────────────────
 let state = {
   route: null,
-  // LO
   loType: null, loPriority: null, loDate: '', loAssignee: '',
-  // Task
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
-  // Shared
-  description: '',
-  claudeDraft: null,
+  description: '', claudeDraft: null,
 };
 
-// ─── Progress ────────────────────────────────────────────────────────────────
 function updateProgress(step) {
   for (let i = 1; i <= 4; i++) {
     const d = document.getElementById('dot' + i);
@@ -536,7 +716,6 @@ function updateProgress(step) {
   }
 }
 
-// ─── Step nav ─────────────────────────────────────────────────────────────────
 function showStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   const el = n === 'success' ? document.getElementById('stepSuccess') : document.getElementById('step' + n);
@@ -574,7 +753,6 @@ function goToStep3() {
 function goToStep3fresh() {
   const desc = document.getElementById('workDescription').value.trim();
   if (!desc) { alert('Please add a description.'); return; }
-
   if (state.route === 'lo') {
     if (!state.loType) { alert('Please select a type.'); return; }
     if (!state.loPriority) { alert('Please select a priority.'); return; }
@@ -605,7 +783,6 @@ function goToStep4() {
   showStep(4);
 }
 
-// ─── Route / type / priority selection ───────────────────────────────────────
 function selectRoute(r) {
   state.route = r;
   document.getElementById('routeLO').className = 'route-card' + (r === 'lo' ? ' sel-lo' : '');
@@ -636,53 +813,36 @@ function selectPriority(p, route) {
 
 function onProjectChange() {
   const projectId = document.getElementById('taskProject').value;
-  const milestoneSelect = document.getElementById('taskMilestone');
-  milestoneSelect.innerHTML = '';
-  if (!projectId) {
-    milestoneSelect.innerHTML = '<option value="">— select a project first —</option>';
-    milestoneSelect.disabled = true;
-    return;
-  }
+  const ms = document.getElementById('taskMilestone');
+  ms.innerHTML = '';
+  if (!projectId) { ms.innerHTML = '<option value="">— select a project first —</option>'; ms.disabled = true; return; }
   const milestones = MILESTONES[projectId] || [];
-  if (milestones.length === 0) {
-    milestoneSelect.innerHTML = '<option value="">— no milestones found —</option>';
-    milestoneSelect.disabled = true;
-  } else {
-    milestoneSelect.innerHTML = '<option value="">— select a milestone —</option>';
-    milestones.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.id;
-      opt.textContent = m.name;
-      milestoneSelect.appendChild(opt);
-    });
-    milestoneSelect.disabled = false;
+  if (milestones.length === 0) { ms.innerHTML = '<option value="">— no milestones found —</option>'; ms.disabled = true; }
+  else {
+    ms.innerHTML = '<option value="">— select a milestone —</option>';
+    milestones.forEach(m => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name; ms.appendChild(o); });
+    ms.disabled = false;
   }
 }
 
-// ─── Claude call ─────────────────────────────────────────────────────────────
 async function runClaude() {
   const dot = document.getElementById('claudeDot');
   const output = document.getElementById('claudeOutput');
   const statusEl = document.getElementById('claudeStatus');
   const btnRow = document.getElementById('step3BtnRow');
+  dot.className = 'claude-dot'; btnRow.style.display = 'none'; output.textContent = 'Analyzing your input...';
 
-  dot.className = 'claude-dot';
-  btnRow.style.display = 'none';
-  output.textContent = 'Analyzing your input...';
-
-  let routeContext;
-  if (state.route === 'lo') {
-    routeContext = `This is a Luminate Online (LO) work item. Type: ${state.loType}. Priority: ${state.loPriority}. Due: ${state.loDate || 'not specified'}.`;
-  } else {
-    routeContext = `This is a Task Tracker task under project "${state.taskProjectName}", milestone "${state.taskMilestoneName}". Task Type: ${state.taskType}. Priority: ${state.taskPriority}. Effort: ${state.taskEffort || 'not specified'}.`;
-  }
+  const ticketType = state.route === 'lo' ? state.loType : state.taskType;
+  const routeContext = state.route === 'lo'
+    ? `Ticket type: ${state.loType}. Priority: ${state.loPriority}. Due: ${state.loDate || 'not specified'}.`
+    : `Project task under "${state.taskProjectName}", milestone "${state.taskMilestoneName}". Task Type: ${state.taskType}. Priority: ${state.taskPriority}. Effort: ${state.taskEffort || 'not specified'}.`;
 
   const systemPrompt = `You are a ticket-writing assistant for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
 
 CRITICAL RULES:
 1. Never ask clarifying questions. Draft the best possible ticket from the input. Fill gaps with reasonable defaults.
-2. Return ONLY valid JSON — no markdown, no explanation, no preamble.
-3. The "description" field must use markdown formatting as specified below — it renders in Airtable's richText field.
+2. Return ONLY valid JSON — no markdown fences, no explanation, no preamble.
+3. The "description" field must use markdown formatting — it renders in Airtable's richText field.
 
 Team context:
 - LO = Luminate Online by Blackbaud (peer-to-peer fundraising, email, event ticketing)
@@ -691,9 +851,9 @@ Team context:
 
 ${routeContext}
 
-DESCRIPTION FORMATTING — use the structure that matches the ticket type exactly:
+DESCRIPTION FORMAT — match the structure to the ticket type exactly:
 
-TYPE: Bug
+Bug:
 **Context**
 What triggered this / where it was found.
 
@@ -709,38 +869,35 @@ What is happening instead.
 
 **Acceptance criteria**
 - [ ] Specific, verifiable fix condition
-- [ ] Regression passes / no side effects
+- [ ] Regression passes
 
 ---
-
-TYPE: Enhancement | Config Change | Campaign Setup | Content Update | Work Ticket
+Enhancement | Config Change | Campaign Setup | Content Update | Work Ticket:
 **Context**
-Why this work is needed / what it supports.
+Why this work is needed.
 
 **What needs to happen**
 Specific changes or deliverables required.
 
 **Acceptance criteria**
-- [ ] Checkable, verifiable completion condition
-(Include if you can infer real criteria from the input. Omit entire section — and add a flag — if input is too thin to write real criteria.)
+- [ ] Checkable completion condition
+(Include ONLY if you can infer real, specific criteria from the input. Omit entire section and add a flag if input is too thin.)
 
 ---
-
-TYPE: Spike | Audit | Spike/Audit
+Spike | Audit | Spike/Audit:
 **Context**
 What question or uncertainty this spike is resolving.
 
 **Scope**
-What is in scope for this investigation. What is explicitly out of scope.
+What is in scope. What is explicitly out of scope.
 
 **Expected output**
-The deliverable when this spike is done — e.g. a decision, a document, a recommendation, a proof of concept. Be specific.
+The specific deliverable when done — a decision, document, recommendation, or proof of concept.
 
-(Never include acceptance criteria for spikes. Never flag missing ACs for spikes.)
+(NEVER include acceptance criteria for spikes. NEVER flag missing ACs for spikes.)
 
 ---
-
-TYPE: Other
+Other:
 **Context**
 Background and reason for the work.
 
@@ -750,93 +907,74 @@ What needs to be done.
 **Acceptance criteria**
 - [ ] Include if inferrable. Omit and flag if not.
 
----
+FLAGS: Genuine concerns only, max 3. Always flag if AC is required but missing (not for spikes). Never flag inferrable info. Empty array if nothing to flag.
 
-FLAGS: Use the flags array for genuine concerns only (max 3). Always flag missing AC when required (not for spikes). Never flag things that are inferrable from context. Empty array if nothing real to flag.
-
-Return this JSON structure exactly:
+Return exactly:
 {
-  "name": "concise title (max 60 chars)",
-  "description": "formatted markdown as specified above",
-  "flags": ["array of strings, or empty array"]
+  "name": "concise title, max 60 chars",
+  "description": "formatted markdown per above",
+  "flags": []
 }`;
 
   try {
     statusEl.textContent = 'claude-sonnet-4-6 · drafting';
     const res = await fetch('/api/claude', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: state.description }]
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: systemPrompt, messages: [{ role: 'user', content: state.description }] })
     });
-
     const data = await res.json();
     let text = '';
     for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
     state.claudeDraft = JSON.parse(text);
-
     output.textContent = '✓ Draft complete — reviewing with you next.';
     dot.className = 'claude-dot done';
     statusEl.textContent = 'claude-sonnet-4-6 · done';
     btnRow.style.display = 'flex';
   } catch (err) {
     output.textContent = 'Error: ' + err.message + '\n\nCheck your network or try again.';
-    dot.className = 'claude-dot';
-    statusEl.textContent = 'claude-sonnet-4-6 · error';
-    btnRow.style.display = 'flex';
+    dot.className = 'claude-dot'; statusEl.textContent = 'claude-sonnet-4-6 · error'; btnRow.style.display = 'flex';
   }
 }
 
-// ─── Review UI ───────────────────────────────────────────────────────────────
 function buildReviewUI() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
-  const isTask = state.route === 'task';
-
   const chip = document.getElementById('destinationChip');
   chip.className = 'destination-chip ' + (isLO ? 'lo' : 'task');
-  chip.innerHTML = isLO
-    ? '⚙️ &nbsp;LO Work Items → Project Dashboard'
-    : '📋 &nbsp;Task Tracker → Project Dashboard';
+  chip.innerHTML = isLO ? '⚙️ &nbsp;LO Work Items → Project Dashboard' : '📋 &nbsp;Task Tracker → Project Dashboard';
 
   const flagsBox = document.getElementById('flagsBox');
   const flagsList = document.getElementById('flagsList');
   if (draft.flags && draft.flags.length > 0) {
     flagsList.innerHTML = draft.flags.map(f => `<li>${escHtml(f)}</li>`).join('');
     flagsBox.classList.remove('hidden');
-  } else {
-    flagsBox.classList.add('hidden');
-  }
+  } else { flagsBox.classList.add('hidden'); }
 
   const container = document.getElementById('reviewFields');
   container.innerHTML = '';
 
-  function addField(label, key, value, editable = true, multiline = false) {
+  function addField(label, key, value, editable, multiline) {
     const div = document.createElement('div');
     div.className = 'review-field';
     div.innerHTML = `<div class="review-field-label">${label}</div>`;
     if (editable) {
       if (multiline) {
         const ta = document.createElement('textarea');
-        ta.style.cssText = 'display:block;width:100%;min-height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;line-height:1.5;resize:vertical;outline:none;';
+        ta.style.cssText = 'display:block;width:100%;min-height:100px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;line-height:1.5;resize:vertical;outline:none;';
         ta.value = value || '';
         ta.oninput = () => { state.claudeDraft[key] = ta.value; };
-        ta.onfocus = () => { ta.style.borderColor = 'var(--accent)'; };
-        ta.onblur = () => { ta.style.borderColor = 'var(--border)'; };
+        ta.onfocus = () => { ta.style.borderColor = 'var(--navy)'; ta.style.boxShadow = '0 0 0 3px rgba(0,37,105,0.1)'; };
+        ta.onblur = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
         div.appendChild(ta);
       } else {
         const inp = document.createElement('input');
         inp.type = 'text';
-        inp.style.cssText = 'display:block;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:DM Sans,sans-serif;font-size:13px;outline:none;';
+        inp.style.cssText = 'display:block;width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:Arial,sans-serif;font-size:13px;outline:none;';
         inp.value = value || '';
         inp.oninput = () => { state.claudeDraft[key] = inp.value; };
-        inp.onfocus = () => { inp.style.borderColor = 'var(--accent)'; };
-        inp.onblur = () => { inp.style.borderColor = 'var(--border)'; };
+        inp.onfocus = () => { inp.style.borderColor = 'var(--navy)'; inp.style.boxShadow = '0 0 0 3px rgba(0,37,105,0.1)'; };
+        inp.onblur = () => { inp.style.borderColor = 'var(--border)'; inp.style.boxShadow = 'none'; };
         div.appendChild(inp);
       }
     } else {
@@ -846,15 +984,22 @@ function buildReviewUI() {
       div.appendChild(vdiv);
     }
     container.appendChild(div);
+    if (container.children.length < container.childElementCount) {
+      const hr = document.createElement('hr');
+      hr.className = 'section-divider';
+      container.appendChild(hr);
+    }
   }
 
-  addField('Title', 'name', draft.name);
+  addField('Title', 'name', draft.name, true, false);
+  const hr1 = document.createElement('hr'); hr1.className = 'section-divider'; container.appendChild(hr1);
   addField('Description', 'description', draft.description, true, true);
+  const hr2 = document.createElement('hr'); hr2.className = 'section-divider'; container.appendChild(hr2);
 
   if (isLO) {
     addField('Type', 'type', state.loType, false);
     addField('Priority', 'priority', state.loPriority, false);
-    if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee] || state.loAssignee, false);
+    if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee], false);
     if (state.loDate) addField('Due Date', '_', state.loDate, false);
   } else {
     addField('Project', '_', state.taskProjectName, false);
@@ -862,73 +1007,45 @@ function buildReviewUI() {
     addField('Task Type', '_', state.taskType, false);
     addField('Priority', '_', state.taskPriority, false);
     if (state.taskEffort) addField('Effort', '_', state.taskEffort, false);
-    if (state.taskAssignee) addField('Assignee', '_', TEAM_NAMES[state.taskAssignee] || state.taskAssignee, false);
+    if (state.taskAssignee) addField('Assignee', '_', TEAM_NAMES[state.taskAssignee], false);
     if (state.taskStart) addField('Start Date', '_', state.taskStart, false);
     if (state.taskDue) addField('Due Date', '_', state.taskDue, false);
   }
 
-  const submitBtn = document.getElementById('submitBtn');
-  submitBtn.className = 'btn-primary' + (isLO ? ' btn-lo' : ' btn-task');
+  document.getElementById('submitBtn').className = 'btn-primary' + (isLO ? ' btn-lo' : ' btn-task');
 }
 
-// ─── Submit ───────────────────────────────────────────────────────────────────
 async function submitTicket() {
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.textContent = 'Creating...';
-
+  btn.disabled = true; btn.textContent = 'Creating...';
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
   const dest = BASES[state.route];
-
   let fields;
   if (isLO) {
-    fields = {
-      'Name': draft.name || 'Untitled',
-      'Description': draft.description || '',
-      'Type': state.loType || 'Other',
-      'Priority': state.loPriority || 'Medium',
-      'Status': 'Backlog',
-    };
+    fields = { 'Name': draft.name || 'Untitled', 'Description': draft.description || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [{ id: state.loAssignee }];
   } else {
-    fields = {
-      'Task Name': draft.name || 'Untitled',
-      'Description': draft.description || '',
-      'Task Type': state.taskType || 'Work Ticket',
-      'Priority': state.taskPriority || 'Medium',
-      'Status': 'Not Started',
-      'Related Milestone': [{ id: state.taskMilestone }],
-    };
+    fields = { 'Task Name': draft.name || 'Untitled', 'Description': draft.description || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [{ id: state.taskMilestone }] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
     if (state.taskAssignee) fields['Assignee'] = [{ id: state.taskAssignee }];
     if (state.taskStart) fields['Start date'] = state.taskStart;
     if (state.taskDue) fields['Due Date'] = state.taskDue;
   }
-
   try {
-    const res = await fetch('/api/airtable', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields })
-    });
+    const res = await fetch('/api/airtable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'Airtable error');
-
-    document.getElementById('successSub').textContent = isLO
-      ? 'Added to LO Work Items in Project Dashboard.'
-      : `Added to Task Tracker under "${state.taskMilestoneName}".`;
+    document.getElementById('successSub').textContent = isLO ? 'Added to LO Work Items in Project Dashboard.' : `Added to Task Tracker under "${state.taskMilestoneName}".`;
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
     showStep('success');
   } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'Create Ticket ✓';
+    btn.disabled = false; btn.textContent = 'Create Ticket ✓';
     alert('Submission failed: ' + err.message);
   }
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function startOver() {
@@ -939,15 +1056,12 @@ function startOver() {
   document.getElementById('workDescription').value = '';
   document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
+  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
 updateProgress(1);
 </script>
 </body>
