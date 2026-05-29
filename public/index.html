@@ -104,13 +104,6 @@
           <div class="field-label">Assignee <span class="opt">optional</span></div>
           <select id="loAssignee" onchange="onAssigneeChange('lo')">
             <option value="">— unassigned —</option>
-            <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
-            <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
-            <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
-            <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
-            <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
-            <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
-            <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
           </select>
         </div>
       </div>
@@ -180,13 +173,6 @@
           <div class="field-label">Assignee <span class="opt">optional</span></div>
           <select id="taskAssignee" onchange="onAssigneeChange('task')">
             <option value="">— unassigned —</option>
-            <option value="rec1zJZdWbOfKUr8B">Brandy Reppy</option>
-            <option value="recZPk5UCg0aZof4r">Christopher Hunt</option>
-            <option value="recPNbEnssFMGRHQx">Dan Krumm</option>
-            <option value="recPDfXyw7Ewvwktd">Erik Haunold</option>
-            <option value="recGJfQXlp8KCl82S">Hooria Tariq</option>
-            <option value="recWpA1fDeHRb4nTf">Shannon Kenney</option>
-            <option value="recmMouUvoEbbDi4y">Nicole Thurgood</option>
           </select>
         </div>
       </div>
@@ -291,7 +277,10 @@
       <div class="success-title">Ticket created</div>
       <div class="success-sub" id="successSub">Your ticket has been added to Airtable.</div>
       <div class="success-id" id="successId"></div>
-      <button class="btn-primary" style="margin:0 auto" onclick="startOver()">Write another ticket</button>
+      <div class="success-actions">
+        <a id="successLink" class="btn-primary" target="_blank" rel="noopener">Open ticket in Airtable ↗</a>
+        <button class="btn-back" onclick="startOver()">Write another ticket</button>
+      </div>
     </div>
   </div>
 

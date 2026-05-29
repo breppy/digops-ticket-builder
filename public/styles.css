@@ -375,6 +375,8 @@ textarea { min-height: 130px; }
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 9px 18px; display: inline-block; margin-bottom: 28px;
 }
+.success-actions { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.success-actions .btn-primary { text-decoration: none; }
 
 .hidden { display: none !important; }
 .step { display: none; }

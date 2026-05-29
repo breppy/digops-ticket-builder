@@ -14,6 +14,7 @@ let attachIdCounter = 0;
 const PROJECT_BASE = 'appJCpsSpgD07hGLf';
 const PROJECTS_TABLE = 'tblwp9bKQbieVV58G';
 const MILESTONES_TABLE = 'tblel2WDV5glyxrZe';
+const TEAM_TABLE = 'tblPHYciSmiGv3Eo3';
 
 // Project statuses treated as finished — these are hidden from the dropdown.
 // Anything else (including projects with no status set) counts as active.
@@ -86,15 +87,37 @@ async function loadProjectsAndMilestones() {
   }
 }
 
-const TEAM_NAMES = {
-  'rec1zJZdWbOfKUr8B': 'Brandy Reppy',
-  'recZPk5UCg0aZof4r': 'Christopher Hunt',
-  'recPNbEnssFMGRHQx': 'Dan Krumm',
-  'recPDfXyw7Ewvwktd': 'Erik Haunold',
-  'recGJfQXlp8KCl82S': 'Hooria Tariq',
-  'recWpA1fDeHRb4nTf': 'Shannon Kenney',
-  'recmMouUvoEbbDi4y': 'Nicole Thurgood',
-};
+// recordId -> name. Populated live from the Team Members table on page load.
+let TEAM_NAMES = {};
+
+// Loads active team members into both assignee dropdowns and the TEAM_NAMES
+// lookup (used to show the assignee name on the review screen).
+async function loadAssignees() {
+  const selects = [document.getElementById('loAssignee'), document.getElementById('taskAssignee')];
+  try {
+    const members = await airtableList(TEAM_TABLE, {
+      fields: ['Name'],
+      filterByFormula: '{Active}=1',
+    });
+    members.sort((a, b) => (a.fields.Name || '').localeCompare(b.fields.Name || ''));
+    TEAM_NAMES = {};
+    selects.forEach(sel => { if (sel) sel.innerHTML = '<option value="">— unassigned —</option>'; });
+    members.forEach(m => {
+      const name = m.fields.Name || '(unnamed)';
+      TEAM_NAMES[m.id] = name;
+      selects.forEach(sel => {
+        if (!sel) return;
+        const o = document.createElement('option');
+        o.value = m.id;
+        o.textContent = name;
+        sel.appendChild(o);
+      });
+    });
+  } catch (err) {
+    // Non-fatal: leave the "unassigned" option so tickets can still be created.
+    console.error('Failed to load assignees:', err);
+  }
+}
 
 let state = {
   route: null,
@@ -482,6 +505,7 @@ async function submitTicket() {
     const base = isLO ? 'Added to LO Work Items in Project Dashboard.' : `Added to Task Tracker under "${state.taskMilestoneName}".`;
     document.getElementById('successSub').textContent = base + attachmentSummary(attachFailures);
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
+    document.getElementById('successLink').href = `https://airtable.com/${dest.baseId}/${dest.tableId}/${data.id}`;
     showStep('success');
   } catch (err) {
     btn.disabled = false; btn.textContent = 'Create Ticket ✓';
@@ -625,3 +649,4 @@ function startOver() {
 updateProgress(1);
 setupUploads();
 loadProjectsAndMilestones();
+loadAssignees();
