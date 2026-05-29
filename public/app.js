@@ -10,73 +10,81 @@ const MAX_ATTACH_BYTES = 2.5 * 1024 * 1024; // 2.5 MB
 const MAX_IMAGE_DIMENSION = 2000;           // px — longest edge after downscale
 let attachIdCounter = 0;
 
-const MILESTONES = {
-  'rec8yRUa9H72G5kNc': [
-    { id: 'recXWCPAmw2qjMgh4', name: 'Survey Design Finalization & Approval' },
-    { id: 'recPCvcgNVWB3oUDc', name: 'Segment Message Variants Finalized' },
-    { id: 'rec9Qp5KAq8UyDxNe', name: 'Survey Deployment Complete' },
-    { id: 'recpB0z1bQOWMIYMt', name: 'Insights Analysis & Synthesis Complete' },
-    { id: 'rec0bViAJMDggFde5', name: 'Findings Brief Delivered' },
-  ],
-  'recZpRRs2uJRHOf96': [
-    { id: 'recCmCVKHgibXItxk', name: 'M1: CFS Parameter Definition & Stakeholder Alignment' },
-    { id: 'recMFohKZfujhHkIY', name: 'M2: Engineering Configuration & Integration' },
-    { id: 'recHGXt4k2JsbHPBF', name: 'M3: QA Testing & Acceptance' },
-    { id: 'recQRoA8gQDdQnGw2', name: 'M4: Launch & Initial Monitoring' },
-  ],
-  'recWhOZAtXp6ZUFZU': [
-    { id: 'recQh21I8Ut6HRio3', name: 'M1: Requirements & Technical Scoping' },
-    { id: 'rec8jeQw9Hcck9dSb', name: 'M2: Engineering Build' },
-    { id: 'recKNTVhh1jdTruFD', name: 'M3: QA Testing & Acceptance' },
-    { id: 'recSKYoQoxRfC3uGk', name: 'M4: Launch & Phase 1 Monitoring' },
-    { id: 'recZ94jACdZu4wABG', name: 'Discovery & Requirements Finalization' },
-    { id: 'recHrWZe3GyolhmzO', name: 'Design & UX Mockups' },
-    { id: 'rec9QmkUSQIpMnlhr', name: 'Development & Implementation' },
-  ],
-  'recnZewNDr6PxAKXw': [
-    { id: 'recuigzpzEEW3HZc7', name: 'Phase 0 — Distribute KPI intake to stakeholders' },
-    { id: 'recuwzdD0ngvtUlDL', name: 'Phase 0 — Confirm M+R vendor tag status' },
-    { id: 'recQfGheSijJpN8yD', name: 'Phase 0 — Confirm LO variable availability' },
-    { id: 'recoxAn4O7M0peynE', name: 'Phase 0 — Align with Wide Eye on GA4 architecture' },
-    { id: 'recFoD0F4e4IfVxLi', name: 'Phase 1 — GA4 property consolidation and stream setup' },
-    { id: 'recBuCiqa1ozLLGuc', name: 'Phase 1 — Standardize Luminate dataLayer pushes' },
-    { id: 'reckmgurkXSRvkku6', name: 'Phase 1 — Update SSL domain references in GTM' },
-    { id: 'recRVhdIIJzddXJM3', name: 'Phase 1 — GTM consolidation under Giving container' },
-    { id: 'recSqZ0VaFXqgnkLu', name: 'Phase 1 — Configure GA4 ecommerce schema' },
-    { id: 'recQmBOera0rjovcB', name: 'Phase 2 — QA sign-off across all events' },
-    { id: 'rec2dyvrvxC8dOYv9', name: 'Phase 2 — 4-week baseline monitoring hold' },
-    { id: 'recPxA9yOpgXmCNn7', name: 'Phase 2 — Build Looker Studio Executive Summary' },
-    { id: 'recojx2XZaj8Z3zpk', name: 'Phase 2 — Build CFS funnel deep dive dashboard' },
-    { id: 'rect0st9fu2qnAs5R', name: 'Phase 3 — Expand dashboard to all program KPIs' },
-    { id: 'rec53yYonUppAGOid', name: 'Phase 3 — Add What Needs Attention layer' },
-    { id: 'recn239MTz0DQHTTe', name: "Phase 3 — Expand Fred's Team and Giving instrumentation" },
-    { id: 'rectPMYKRLAh9rbBX', name: 'Phase 3 — Begin first CFS registration flow pilot' },
-    { id: 'recVp08PCd9d4ASA3', name: 'Phase 4 — Establish recurring performance review' },
-    { id: 'reck3do5inLjKUEmz', name: 'Phase 4 — Establish GTM governance process' },
-  ],
-  'recfAzlI7JomtkxFp': [],
-  'recSK8fZgtLupqMPl': [],
-  'recz8QJHJUffBctmK': [],
-  'recyQIfAbntRkQ19A': [
-    { id: 'recJNFA22ABecz0BT', name: 'QA Testing & Validation (Complete Cover vs Donor Cover)' },
-    { id: 'recOFDXvdEY2KEg1m', name: 'CRM & Reporting Validation' },
-    { id: 'rec2rN6afStuNM8aY', name: 'Test Form Build & Dynamic Yield Setup' },
-    { id: 'recWdJdd6DbOLCw4l', name: 'Pilot Launch & Monitoring' },
-    { id: 'recYFMSrI2X6iKE0z', name: 'Results Analysis & Rollout Decision' },
-  ],
-  'recPUryoYZEkZyLOP': [],
-  'recR3wzpfrxJGR4g1': [
-    { id: 'recH6lcNiWTPB5d3X', name: 'Discovery & Requirements Gathering' },
-    { id: 'recKFLryWcVA5DMW2', name: 'UX Design & Prototyping' },
-    { id: 'recJEVEWuHpDeu0Qc', name: 'Technical Architecture & CRM Integration Planning' },
-    { id: 'recSKtAmVKyw75FNV', name: 'Development - Phase 1 (Core UX)' },
-    { id: 'recW5XwfrZGHk1fZC', name: 'Development - Phase 2 (Custom Fields & Add-ons)' },
-    { id: 'rec1B8nQBtVhsw4Ql', name: 'QA, Testing & Pilot Preparation' },
-    { id: 'rec29SpLZdtT6sokz', name: 'Pilot Launch & Performance Monitoring' },
-  ],
-  'recLvtgE1gRqfpMNL': [],
-  'recSx7fjCpqCKx8RE': [],
-};
+// Project Dashboard tables (same base as the ticket destinations).
+const PROJECT_BASE = 'appJCpsSpgD07hGLf';
+const PROJECTS_TABLE = 'tblwp9bKQbieVV58G';
+const MILESTONES_TABLE = 'tblel2WDV5glyxrZe';
+
+// Project statuses treated as finished — these are hidden from the dropdown.
+// Anything else (including projects with no status set) counts as active.
+const CLOSED_PROJECT_STATUSES = ['Complete', 'Closed', 'Shipped'];
+
+// projectId -> [{ id, name }]. Populated live from Airtable on page load.
+let MILESTONES = {};
+
+// Reads all records from a table via the /api/airtable list proxy, following
+// pagination server-side. Returns an array of Airtable records.
+async function airtableList(tableId, params) {
+  const res = await fetch('/api/airtable', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ baseId: PROJECT_BASE, tableId, action: 'list', params })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'List failed');
+  return data.records || [];
+}
+
+// Loads active projects and their open milestones, then builds the project
+// dropdown and the MILESTONES map. Runs once on page load.
+async function loadProjectsAndMilestones() {
+  const sel = document.getElementById('taskProject');
+  const closedList = CLOSED_PROJECT_STATUSES.map(s => `{Project Status}="${s}"`).join(',');
+  try {
+    const [projects, milestones] = await Promise.all([
+      airtableList(PROJECTS_TABLE, {
+        fields: ['Project Name', 'Project Status'],
+        filterByFormula: `NOT(OR(${closedList}))`,
+      }),
+      airtableList(MILESTONES_TABLE, {
+        fields: ['Milestone / Deliverable', 'Projects', 'Start Date'],
+        filterByFormula: 'NOT({Status}="Completed")',
+      }),
+    ]);
+
+    // Build projectId -> milestones map, ordered by start date then name so
+    // phases read in sequence.
+    MILESTONES = {};
+    milestones
+      .slice()
+      .sort((a, b) => {
+        const sa = a.fields['Start Date'] || '9999-12-31';
+        const sb = b.fields['Start Date'] || '9999-12-31';
+        if (sa !== sb) return sa < sb ? -1 : 1;
+        return (a.fields['Milestone / Deliverable'] || '').localeCompare(b.fields['Milestone / Deliverable'] || '');
+      })
+      .forEach(m => {
+        const name = m.fields['Milestone / Deliverable'] || '(untitled milestone)';
+        (m.fields['Projects'] || []).forEach(pid => {
+          (MILESTONES[pid] = MILESTONES[pid] || []).push({ id: m.id, name });
+        });
+      });
+
+    // Populate the project dropdown, alphabetically.
+    projects.sort((a, b) => (a.fields['Project Name'] || '').localeCompare(b.fields['Project Name'] || ''));
+    sel.innerHTML = '<option value="">— select a project —</option>';
+    projects.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.fields['Project Name'] || '(untitled project)';
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch (err) {
+    console.error('Failed to load projects/milestones:', err);
+    sel.innerHTML = '<option value="">— couldn’t load projects, refresh to retry —</option>';
+    sel.disabled = true;
+  }
+}
 
 const TEAM_NAMES = {
   'rec1zJZdWbOfKUr8B': 'Brandy Reppy',
@@ -616,3 +624,4 @@ function startOver() {
 
 updateProgress(1);
 setupUploads();
+loadProjectsAndMilestones();
