@@ -228,6 +228,20 @@
       </div>
     </div>
 
+    <!-- Shared attachments -->
+    <div class="card">
+      <div class="card-title">Attachments <span class="opt" style="text-transform:none;letter-spacing:0">optional</span></div>
+      <div class="field-group" style="margin-bottom:0">
+        <div id="dropZone" class="drop-zone">
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <span class="drop-zone-icon">📎</span>
+          <div class="drop-zone-text">Drag &amp; drop screenshots here, or <span class="drop-zone-link">browse</span></div>
+          <div class="drop-zone-hint">PNG, JPG, GIF · large images are auto-resized · 2.5 MB max each</div>
+        </div>
+        <div id="attachmentList" class="attachment-list"></div>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button class="btn-back" onclick="goToStep1()">← Back</button>
       <div style="flex:1"></div>

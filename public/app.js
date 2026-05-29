@@ -1,7 +1,14 @@
 const BASES = {
-  lo:   { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc' },
-  task: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww' },
+  lo:   { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', attachmentFieldId: 'fldVbU5E2bNQjyKtD' },
+  task: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww', attachmentFieldId: 'fld5amAF4Nb1xzaSf' },
 };
+
+// Attachment limits. Raw blob is capped so the base64 payload (≈ +33%) stays
+// under the edge function's ~4 MB body limit. Larger images are auto-downscaled
+// before this check, so most screenshots pass without manual resizing.
+const MAX_ATTACH_BYTES = 2.5 * 1024 * 1024; // 2.5 MB
+const MAX_IMAGE_DIMENSION = 2000;           // px — longest edge after downscale
+let attachIdCounter = 0;
 
 const MILESTONES = {
   'rec8yRUa9H72G5kNc': [
@@ -86,7 +93,7 @@ let state = {
   loType: null, loPriority: null, loDate: '', loAssignee: '',
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
-  description: '', claudeDraft: null, refinementNotes: [],
+  description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
 
 function updateProgress(step) {
@@ -457,7 +464,15 @@ async function submitTicket() {
     const res = await fetch('/api/airtable', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'Airtable error');
-    document.getElementById('successSub').textContent = isLO ? 'Added to LO Work Items in Project Dashboard.' : `Added to Task Tracker under "${state.taskMilestoneName}".`;
+
+    let attachFailures = 0;
+    if (state.attachments.length > 0) {
+      btn.textContent = 'Uploading attachments...';
+      attachFailures = await uploadAttachments(dest, data.id);
+    }
+
+    const base = isLO ? 'Added to LO Work Items in Project Dashboard.' : `Added to Task Tracker under "${state.taskMilestoneName}".`;
+    document.getElementById('successSub').textContent = base + attachmentSummary(attachFailures);
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
     showStep('success');
   } catch (err) {
@@ -466,10 +481,127 @@ async function submitTicket() {
   }
 }
 
+// Uploads each attachment to the new record sequentially (Airtable's
+// uploadAttachment endpoint appends, so parallel calls can race). Returns the
+// number of failures — the ticket itself is already created either way.
+async function uploadAttachments(dest, recordId) {
+  let failures = 0;
+  for (const a of state.attachments) {
+    try {
+      const file = await blobToBase64(a.blob);
+      const up = await fetch('/api/upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseId: dest.baseId, recordId, fieldId: dest.attachmentFieldId, filename: a.name, contentType: a.type, file })
+      });
+      if (!up.ok) failures++;
+    } catch (_) { failures++; }
+  }
+  return failures;
+}
+
+function attachmentSummary(failures) {
+  const total = state.attachments.length;
+  if (total === 0) return '';
+  const ok = total - failures;
+  return failures === 0
+    ? ` ${ok} attachment${ok !== 1 ? 's' : ''} uploaded.`
+    : ` ${ok} of ${total} attachments uploaded — ${failures} failed.`;
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// ---- Attachment picker (Step 2) ----
+
+function setupUploads() {
+  const dz = document.getElementById('dropZone');
+  const input = document.getElementById('fileInput');
+  if (!dz || !input) return;
+  dz.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave', 'dragend'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+}
+
+async function addFiles(fileList) {
+  for (const file of Array.from(fileList)) {
+    if (!file.type.startsWith('image/')) { alert(`"${file.name}" isn't an image — skipped.`); continue; }
+    let chosen = file;
+    if (file.type === 'image/png' || file.type === 'image/jpeg') {
+      try {
+        const smaller = await downscaleImage(file);
+        if (smaller && smaller.size < file.size) chosen = smaller;
+      } catch (_) { /* keep original on any failure */ }
+    }
+    if (chosen.size > MAX_ATTACH_BYTES) {
+      alert(`"${file.name}" is ${(chosen.size / 1048576).toFixed(1)} MB, over the 2.5 MB limit even after resizing. Please shrink it and try again.`);
+      continue;
+    }
+    state.attachments.push({ id: ++attachIdCounter, blob: chosen, name: file.name, type: chosen.type || file.type, url: URL.createObjectURL(chosen) });
+  }
+  renderAttachments();
+}
+
+// Draws the image onto a canvas scaled so its longest edge is MAX_IMAGE_DIMENSION.
+// Returns null when no downscale is needed (image already small enough).
+function downscaleImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objUrl);
+      const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.width, img.height));
+      if (scale === 1) { resolve(null); return; }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(b => resolve(b), 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('image load failed')); };
+    img.src = objUrl;
+  });
+}
+
+function renderAttachments() {
+  const list = document.getElementById('attachmentList');
+  if (!list) return;
+  list.innerHTML = '';
+  state.attachments.forEach(a => {
+    const div = document.createElement('div');
+    div.className = 'attachment-item';
+    div.innerHTML = `<img class="attachment-thumb" src="${a.url}" alt=""><div class="attachment-name">${escHtml(a.name)}</div><button class="attachment-remove" title="Remove" type="button">✕</button>`;
+    div.querySelector('.attachment-remove').addEventListener('click', () => removeAttachment(a.id));
+    list.appendChild(div);
+  });
+}
+
+function removeAttachment(id) {
+  const idx = state.attachments.findIndex(a => a.id === id);
+  if (idx >= 0) {
+    URL.revokeObjectURL(state.attachments[idx].url);
+    state.attachments.splice(idx, 1);
+    renderAttachments();
+  }
+}
+
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function startOver() {
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', description: '', claudeDraft: null, refinementNotes: [] };
+  state.attachments.forEach(a => URL.revokeObjectURL(a.url));
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
   document.getElementById('step1Next').disabled = true;
@@ -483,3 +615,4 @@ function startOver() {
 }
 
 updateProgress(1);
+setupUploads();
