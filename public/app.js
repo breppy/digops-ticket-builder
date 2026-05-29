@@ -92,25 +92,37 @@ async function loadProjectsAndMilestones() {
   }
 }
 
-// recordId -> name. Populated live from the Team Members table on page load.
+// recordId -> name, and recordId -> Airtable user account ({id, email}).
+// Both populated live from the Team Members table on page load. TEAM_USERS is
+// needed for the Support base, where Assignee is a Collaborator field (set by
+// user account) rather than a linked record.
 let TEAM_NAMES = {};
+let TEAM_USERS = {};
 
-// Loads active team members into both assignee dropdowns and the TEAM_NAMES
-// lookup (used to show the assignee name on the review screen).
+// Loads active team members into every person dropdown (assignee on all three
+// routes, plus the support reporter) and the TEAM_NAMES / TEAM_USERS lookups.
 async function loadAssignees() {
-  const selects = [document.getElementById('loAssignee'), document.getElementById('taskAssignee')];
+  const assigneeSelects = [
+    document.getElementById('loAssignee'),
+    document.getElementById('taskAssignee'),
+    document.getElementById('supportAssignee'),
+  ];
+  const reporterSelect = document.getElementById('supportReporter');
   try {
     const members = await airtableList(PROJECT_BASE, TEAM_TABLE, {
-      fields: ['Name'],
+      fields: ['Name', 'User'],
       filterByFormula: '{Active}=1',
     });
     members.sort((a, b) => (a.fields.Name || '').localeCompare(b.fields.Name || ''));
     TEAM_NAMES = {};
-    selects.forEach(sel => { if (sel) sel.innerHTML = '<option value="">— unassigned —</option>'; });
+    TEAM_USERS = {};
+    assigneeSelects.forEach(sel => { if (sel) sel.innerHTML = '<option value="">— unassigned —</option>'; });
+    if (reporterSelect) reporterSelect.innerHTML = '<option value="">— select reporter —</option>';
     members.forEach(m => {
       const name = m.fields.Name || '(unnamed)';
       TEAM_NAMES[m.id] = name;
-      selects.forEach(sel => {
+      if (m.fields.User && m.fields.User.id) TEAM_USERS[m.id] = m.fields.User;
+      [...assigneeSelects, reporterSelect].forEach(sel => {
         if (!sel) return;
         const o = document.createElement('option');
         o.value = m.id;
@@ -119,7 +131,7 @@ async function loadAssignees() {
       });
     });
   } catch (err) {
-    // Non-fatal: leave the "unassigned" option so tickets can still be created.
+    // Non-fatal: leave the placeholder options so tickets can still be created.
     console.error('Failed to load assignees:', err);
   }
 }
@@ -155,6 +167,7 @@ let state = {
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
   supportPriority: null, supportCategory: '', supportCategoryName: '',
+  supportReporter: '', supportReporterName: '', supportAssignee: '',
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
 
@@ -220,6 +233,11 @@ function goToStep3fresh() {
     if (!catSel.value) { alert('Please select a category.'); return; }
     state.supportCategory = catSel.value;
     state.supportCategoryName = catSel.options[catSel.selectedIndex].text;
+    const repSel = document.getElementById('supportReporter');
+    if (!repSel.value) { alert('Please select who reported this.'); return; }
+    state.supportReporter = repSel.value;
+    state.supportReporterName = repSel.options[repSel.selectedIndex].text;
+    state.supportAssignee = document.getElementById('supportAssignee').value;
   } else {
     if (!document.getElementById('taskProject').value) { alert('Please select a project.'); return; }
     if (!document.getElementById('taskMilestone').value) { alert('Please select a milestone.'); return; }
@@ -549,6 +567,8 @@ function buildReviewUI() {
   } else if (isSupport) {
     addField('Category', '_', state.supportCategoryName, false);
     addField('Priority', '_', state.supportPriority, false);
+    addField('Reporter', '_', state.supportReporterName, false);
+    if (state.supportAssignee) addField('Assignee', '_', TEAM_NAMES[state.supportAssignee], false);
     addField('Status', '_', 'Open', false);
   } else {
     addField('Project', '_', state.taskProjectName, false);
@@ -589,6 +609,11 @@ async function submitTicket() {
   } else if (isSupport) {
     fields = { 'Title': draft.name || 'Untitled', 'Description': finalDescription || '', 'Priority': state.supportPriority || 'Medium', 'Status': 'Open' };
     if (state.supportCategory) fields['Category'] = [state.supportCategory];
+    if (state.supportReporterName) fields['Reporter'] = state.supportReporterName;
+    // Assignee here is a Collaborator field — set by Airtable user account.
+    if (state.supportAssignee && TEAM_USERS[state.supportAssignee]) {
+      fields['Assignee'] = { id: TEAM_USERS[state.supportAssignee].id };
+    }
   } else {
     fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
@@ -741,7 +766,7 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
   renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
@@ -750,7 +775,7 @@ function startOver() {
   document.getElementById('workDescription').value = '';
   document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue','supportCategory'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue','supportCategory','supportReporter','supportAssignee'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);

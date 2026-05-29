@@ -211,10 +211,22 @@
             <button class="priority-chip" onclick="selectPriority('Low','support')">🔵 Low</button>
           </div>
         </div>
-        <div class="field-group" style="margin-bottom:0">
+        <div class="field-group">
           <div class="field-label">Category <span class="req">required</span></div>
           <select id="supportCategory" disabled>
             <option value="">— loading categories… —</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Reported by <span class="req">required</span></div>
+          <select id="supportReporter">
+            <option value="">— select reporter —</option>
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Assignee <span class="opt">optional</span></div>
+          <select id="supportAssignee">
+            <option value="">— unassigned —</option>
           </select>
         </div>
       </div>
