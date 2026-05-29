@@ -55,6 +55,12 @@
         <div class="route-card-title">Project Task</div>
         <div class="route-card-desc">A task that belongs to an existing project and milestone in the Task Tracker.</div>
       </button>
+      <button class="route-card" id="routeSupport" onclick="selectRoute('support')">
+        <span class="route-badge">Selected</span>
+        <span class="route-card-icon">🛟</span>
+        <div class="route-card-title">Support Ticket</div>
+        <div class="route-card-desc">An issue reported by someone — a bug, outage, or problem for the DigOps Support Desk.</div>
+      </button>
       <button class="route-card coming-soon" disabled>
         <span class="route-card-icon">🗂️</span>
         <div class="route-card-title">New Project</div>
@@ -193,6 +199,27 @@
       </div>
     </div>
 
+    <!-- Support fields -->
+    <div id="supportFields" class="hidden">
+      <div class="card">
+        <div class="card-title">Ticket Properties</div>
+        <div class="field-group">
+          <div class="field-label">Priority <span class="req">required</span></div>
+          <div class="priority-row" id="supportPriorityRow">
+            <button class="priority-chip" onclick="selectPriority('High','support')">🔴 High</button>
+            <button class="priority-chip" onclick="selectPriority('Medium','support')">🟡 Medium</button>
+            <button class="priority-chip" onclick="selectPriority('Low','support')">🔵 Low</button>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Category <span class="req">required</span></div>
+          <select id="supportCategory" disabled>
+            <option value="">— loading categories… —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- Shared description -->
     <div class="card">
       <div class="card-title">Description</div>
@@ -203,7 +230,7 @@
     </div>
 
     <!-- Shared attachments -->
-    <div class="card">
+    <div class="card" id="attachmentsCard">
       <div class="card-title">Attachments <span class="opt" style="text-transform:none;letter-spacing:0">optional</span></div>
       <div class="field-group" style="margin-bottom:0">
         <div id="dropZone" class="drop-zone">

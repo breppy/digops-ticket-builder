@@ -1,6 +1,7 @@
 const BASES = {
-  lo:   { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', attachmentFieldId: 'fldVbU5E2bNQjyKtD' },
-  task: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww', attachmentFieldId: 'fld5amAF4Nb1xzaSf' },
+  lo:      { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', attachmentFieldId: 'fldVbU5E2bNQjyKtD' },
+  task:    { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww', attachmentFieldId: 'fld5amAF4Nb1xzaSf' },
+  support: { baseId: 'appYKt9u8weWUuzFd', tableId: 'tblfISsI1vf7fa6No' }, // DigOps Support Desk → Tickets (no attachment field)
 };
 
 // Attachment limits. Raw blob is capped so the base64 payload (≈ +33%) stays
@@ -16,6 +17,10 @@ const PROJECTS_TABLE = 'tblwp9bKQbieVV58G';
 const MILESTONES_TABLE = 'tblel2WDV5glyxrZe';
 const TEAM_TABLE = 'tblPHYciSmiGv3Eo3';
 
+// DigOps Support Desk
+const SUPPORT_BASE = 'appYKt9u8weWUuzFd';
+const SUPPORT_CATEGORIES_TABLE = 'tbl3Wn6lWWRQxUtxv';
+
 // Project statuses treated as finished — these are hidden from the dropdown.
 // Anything else (including projects with no status set) counts as active.
 const CLOSED_PROJECT_STATUSES = ['Complete', 'Closed', 'Shipped'];
@@ -25,10 +30,10 @@ let MILESTONES = {};
 
 // Reads all records from a table via the /api/airtable list proxy, following
 // pagination server-side. Returns an array of Airtable records.
-async function airtableList(tableId, params) {
+async function airtableList(baseId, tableId, params) {
   const res = await fetch('/api/airtable', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ baseId: PROJECT_BASE, tableId, action: 'list', params })
+    body: JSON.stringify({ baseId, tableId, action: 'list', params })
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'List failed');
@@ -42,11 +47,11 @@ async function loadProjectsAndMilestones() {
   const closedList = CLOSED_PROJECT_STATUSES.map(s => `{Project Status}="${s}"`).join(',');
   try {
     const [projects, milestones] = await Promise.all([
-      airtableList(PROJECTS_TABLE, {
+      airtableList(PROJECT_BASE, PROJECTS_TABLE, {
         fields: ['Project Name', 'Project Status'],
         filterByFormula: `NOT(OR(${closedList}))`,
       }),
-      airtableList(MILESTONES_TABLE, {
+      airtableList(PROJECT_BASE, MILESTONES_TABLE, {
         fields: ['Milestone / Deliverable', 'Projects', 'Start Date'],
         filterByFormula: 'NOT({Status}="Completed")',
       }),
@@ -95,7 +100,7 @@ let TEAM_NAMES = {};
 async function loadAssignees() {
   const selects = [document.getElementById('loAssignee'), document.getElementById('taskAssignee')];
   try {
-    const members = await airtableList(TEAM_TABLE, {
+    const members = await airtableList(PROJECT_BASE, TEAM_TABLE, {
       fields: ['Name'],
       filterByFormula: '{Active}=1',
     });
@@ -119,11 +124,37 @@ async function loadAssignees() {
   }
 }
 
+// Loads support categories into the support-ticket category dropdown.
+async function loadSupportCategories() {
+  const sel = document.getElementById('supportCategory');
+  if (!sel) return;
+  try {
+    const cats = await airtableList(SUPPORT_BASE, SUPPORT_CATEGORIES_TABLE, {
+      fields: ['Category Name'],
+    });
+    const named = cats.filter(c => c.fields['Category Name']);
+    named.sort((a, b) => a.fields['Category Name'].localeCompare(b.fields['Category Name']));
+    sel.innerHTML = '<option value="">— select a category —</option>';
+    named.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.fields['Category Name'];
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch (err) {
+    console.error('Failed to load support categories:', err);
+    sel.innerHTML = '<option value="">— couldn’t load categories, refresh to retry —</option>';
+    sel.disabled = true;
+  }
+}
+
 let state = {
   route: null,
   loType: null, loPriority: null, loDate: '', loAssignee: '',
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
+  supportPriority: null, supportCategory: '', supportCategoryName: '',
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
 
@@ -148,12 +179,18 @@ function goToStep2() {
   if (!state.route) return;
   document.getElementById('loFields').classList.toggle('hidden', state.route !== 'lo');
   document.getElementById('taskFields').classList.toggle('hidden', state.route !== 'task');
+  document.getElementById('supportFields').classList.toggle('hidden', state.route !== 'support');
+  // The Tickets table has no attachment field, so hide the uploader for support.
+  document.getElementById('attachmentsCard').classList.toggle('hidden', state.route === 'support');
   if (state.route === 'lo') {
     document.getElementById('step2Title').textContent = 'LO Work Item details';
     document.getElementById('step2Sub').textContent = 'Pick a type and priority, then describe the work.';
-  } else {
+  } else if (state.route === 'task') {
     document.getElementById('step2Title').textContent = 'Project Task details';
     document.getElementById('step2Sub').textContent = 'Select the project, milestone, and task type.';
+  } else {
+    document.getElementById('step2Title').textContent = 'Support Ticket details';
+    document.getElementById('step2Sub').textContent = 'Set priority and category, then describe the issue.';
   }
   showStep(2);
 }
@@ -177,6 +214,12 @@ function goToStep3fresh() {
     state.loDate = document.getElementById('loDate').value;
     state.loAssignee = document.getElementById('loAssignee').value;
     if (state.loAssignee && !state.loDate) { alert('Due date is required when an assignee is selected.'); return; }
+  } else if (state.route === 'support') {
+    if (!state.supportPriority) { alert('Please select a priority.'); return; }
+    const catSel = document.getElementById('supportCategory');
+    if (!catSel.value) { alert('Please select a category.'); return; }
+    state.supportCategory = catSel.value;
+    state.supportCategoryName = catSel.options[catSel.selectedIndex].text;
   } else {
     if (!document.getElementById('taskProject').value) { alert('Please select a project.'); return; }
     if (!document.getElementById('taskMilestone').value) { alert('Please select a milestone.'); return; }
@@ -207,9 +250,10 @@ function selectRoute(r) {
   state.route = r;
   document.getElementById('routeLO').className = 'route-card' + (r === 'lo' ? ' sel-lo' : '');
   document.getElementById('routeTask').className = 'route-card' + (r === 'task' ? ' sel-task' : '');
+  document.getElementById('routeSupport').className = 'route-card' + (r === 'support' ? ' sel-support' : '');
   document.getElementById('step1Next').disabled = false;
-  const btn = document.getElementById('step1Next');
-  btn.className = 'btn-primary' + (r === 'lo' ? ' btn-lo' : r === 'task' ? ' btn-task' : '');
+  const btnClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support' }[r] || '';
+  document.getElementById('step1Next').className = 'btn-primary' + btnClass;
 }
 
 function selectType(t, route) {
@@ -222,8 +266,9 @@ function selectType(t, route) {
 }
 
 function selectPriority(p, route) {
-  state[route === 'lo' ? 'loPriority' : 'taskPriority'] = p;
-  const rowId = route === 'lo' ? 'loPriorityRow' : 'taskPriorityRow';
+  const key = { lo: 'loPriority', task: 'taskPriority', support: 'supportPriority' }[route];
+  state[key] = p;
+  const rowId = { lo: 'loPriorityRow', task: 'taskPriorityRow', support: 'supportPriorityRow' }[route];
   document.querySelectorAll('#' + rowId + ' .priority-chip').forEach(c => {
     c.className = 'priority-chip';
     const label = c.textContent.replace(/[🚨🔴🟡🔵]/g,'').trim();
@@ -266,7 +311,7 @@ async function runClaude() {
     ? `Ticket type: ${state.loType}. Priority: ${state.loPriority}. Due: ${state.loDate || 'not specified'}.`
     : `Project task under "${state.taskProjectName}", milestone "${state.taskMilestoneName}". Task Type: ${state.taskType}. Priority: ${state.taskPriority}. Effort: ${state.taskEffort || 'not specified'}.`;
 
-  const systemPrompt = `You are a ticket-writing assistant for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
+  const workSystemPrompt = `You are a ticket-writing assistant for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
 
 CRITICAL RULES:
 1. Never ask clarifying questions. Draft the best possible ticket from the input. Fill gaps with reasonable defaults.
@@ -348,6 +393,44 @@ Return exactly:
   "notes_for_refinement": []
 }`;
 
+  const supportSystemPrompt = `You are a support-desk assistant for the DigOps team at Memorial Sloan Kettering Cancer Center. A colleague is reporting an issue they ran into (this is an inbound support ticket, not internal planned work). Turn their rough report into a clear, well-structured support ticket.
+
+CRITICAL RULES:
+1. Never ask clarifying questions. Write the best possible ticket from the input.
+2. Return ONLY valid JSON — no markdown fences, no explanation, no preamble.
+3. The "description" field is PLAIN TEXT — no markdown, no asterisks, no "#" headers. It renders in a plain-text field. Use plain labels and line breaks only.
+
+Context: Support category: ${state.supportCategoryName || 'not specified'}. Priority: ${state.supportPriority || 'not specified'}.
+
+DESCRIPTION FORMAT (plain text, use these labels exactly, omit a section if there's nothing real to put in it):
+Issue
+A one or two sentence summary of what is going wrong.
+
+Where it happens
+The page, form, email, tool, or system involved, and who/what is affected.
+
+Steps to reproduce
+1. First step
+2. Second step
+(Only include if the report implies a sequence.)
+
+Expected vs. actual
+What the reporter expected, and what happened instead.
+
+FLAGS: Genuine missing information that the support owner will need to act, max 3. Empty array if the report is clear enough.
+
+NOTES FOR REFINEMENT: Open questions for whoever triages this ticket — e.g. "Which browser/device?", "Confirm the exact URL", "Is this affecting all users or just one?". Only include genuinely missing specifics. Empty array if nothing is needed.
+
+Return exactly:
+{
+  "name": "concise issue title, max 60 chars",
+  "description": "plain text per above",
+  "flags": [],
+  "notes_for_refinement": []
+}`;
+
+  const systemPrompt = state.route === 'support' ? supportSystemPrompt : workSystemPrompt;
+
   try {
     statusEl.textContent = 'claude-sonnet-4-6 · drafting';
     const res = await fetch('/api/claude', {
@@ -373,9 +456,14 @@ Return exactly:
 function buildReviewUI() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
+  const isSupport = state.route === 'support';
   const chip = document.getElementById('destinationChip');
-  chip.className = 'destination-chip ' + (isLO ? 'lo' : 'task');
-  chip.innerHTML = isLO ? '⚙️ &nbsp;LO Work Items → Project Dashboard' : '📋 &nbsp;Task Tracker → Project Dashboard';
+  chip.className = 'destination-chip ' + state.route;
+  chip.innerHTML = isLO
+    ? '⚙️ &nbsp;LO Work Items → Project Dashboard'
+    : isSupport
+      ? '🛟 &nbsp;Tickets → DigOps Support Desk'
+      : '📋 &nbsp;Task Tracker → Project Dashboard';
 
   const flagsBox = document.getElementById('flagsBox');
   const flagsList = document.getElementById('flagsList');
@@ -434,7 +522,7 @@ function buildReviewUI() {
     rfBox.style.marginTop = '12px';
     const rfLabel = document.createElement('div');
     rfLabel.className = 'refinement-box-label';
-    rfLabel.textContent = '📋 Notes for Refinement';
+    rfLabel.textContent = isSupport ? '📋 Open Questions for Triage' : '📋 Notes for Refinement';
     rfBox.appendChild(rfLabel);
     const rfTa = document.createElement('textarea');
     rfTa.value = state.refinementNotes.map(n => '- ' + n).join('\n');
@@ -444,7 +532,9 @@ function buildReviewUI() {
     rfBox.appendChild(rfTa);
     const rfHint = document.createElement('div');
     rfHint.className = 'refinement-hint';
-    rfHint.textContent = 'These open questions will be appended to the ticket description for refinement.';
+    rfHint.textContent = isSupport
+      ? 'These open questions will be appended to the ticket description for triage.'
+      : 'These open questions will be appended to the ticket description for refinement.';
     rfBox.appendChild(rfHint);
     container.appendChild(rfBox);
   }
@@ -456,6 +546,10 @@ function buildReviewUI() {
     addField('Priority', 'priority', state.loPriority, false);
     if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee], false);
     if (state.loDate) addField('Due Date', '_', state.loDate, false);
+  } else if (isSupport) {
+    addField('Category', '_', state.supportCategoryName, false);
+    addField('Priority', '_', state.supportPriority, false);
+    addField('Status', '_', 'Open', false);
   } else {
     addField('Project', '_', state.taskProjectName, false);
     addField('Milestone', '_', state.taskMilestoneName, false);
@@ -467,7 +561,8 @@ function buildReviewUI() {
     if (state.taskDue) addField('Due Date', '_', state.taskDue, false);
   }
 
-  document.getElementById('submitBtn').className = 'btn-primary' + (isLO ? ' btn-lo' : ' btn-task');
+  const submitClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support' }[state.route] || '';
+  document.getElementById('submitBtn').className = 'btn-primary' + submitClass;
 }
 
 async function submitTicket() {
@@ -475,15 +570,25 @@ async function submitTicket() {
   btn.disabled = true; btn.textContent = 'Creating...';
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
+  const isSupport = state.route === 'support';
   const dest = BASES[state.route];
-  const finalDescription = state.refinementNotes.length > 0
-    ? draft.description + '\n\n---\n**Notes for Refinement**\n' + state.refinementNotes.map(n => '- [ ] ' + n).join('\n')
-    : draft.description;
+
+  // Support's Description is plain text; LO/Task use markdown (richText field).
+  let finalDescription = draft.description;
+  if (state.refinementNotes.length > 0) {
+    finalDescription += isSupport
+      ? '\n\n— Open Questions for Triage —\n' + state.refinementNotes.map(n => '- ' + n).join('\n')
+      : '\n\n---\n**Notes for Refinement**\n' + state.refinementNotes.map(n => '- [ ] ' + n).join('\n');
+  }
+
   let fields;
   if (isLO) {
     fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
+  } else if (isSupport) {
+    fields = { 'Title': draft.name || 'Untitled', 'Description': finalDescription || '', 'Priority': state.supportPriority || 'Medium', 'Status': 'Open' };
+    if (state.supportCategory) fields['Category'] = [state.supportCategory];
   } else {
     fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
@@ -497,12 +602,16 @@ async function submitTicket() {
     if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data.error) || 'Airtable error');
 
     let attachFailures = 0;
-    if (state.attachments.length > 0) {
+    if (dest.attachmentFieldId && state.attachments.length > 0) {
       btn.textContent = 'Uploading attachments...';
       attachFailures = await uploadAttachments(dest, data.id);
     }
 
-    const base = isLO ? 'Added to LO Work Items in Project Dashboard.' : `Added to Task Tracker under "${state.taskMilestoneName}".`;
+    const base = isLO
+      ? 'Added to LO Work Items in Project Dashboard.'
+      : isSupport
+        ? 'Filed in the DigOps Support Desk.'
+        : `Added to Task Tracker under "${state.taskMilestoneName}".`;
     document.getElementById('successSub').textContent = base + attachmentSummary(attachFailures);
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
     document.getElementById('successLink').href = `https://airtable.com/${dest.baseId}/${dest.tableId}/${data.id}`;
@@ -632,15 +741,16 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
   renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
+  document.getElementById('routeSupport').className = 'route-card';
   document.getElementById('step1Next').disabled = true;
   document.getElementById('workDescription').value = '';
   document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue','supportCategory'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);
@@ -650,3 +760,4 @@ updateProgress(1);
 setupUploads();
 loadProjectsAndMilestones();
 loadAssignees();
+loadSupportCategories();

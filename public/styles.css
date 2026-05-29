@@ -27,6 +27,9 @@
   --task-color: #1a7f4b;
   --task-dim: rgba(26,127,75,0.1);
   --task-border: rgba(26,127,75,0.4);
+  --support-color: #0e7490;
+  --support-dim: rgba(14,116,144,0.1);
+  --support-border: rgba(14,116,144,0.4);
   --radius: 6px;
   --radius-lg: 10px;
   --shadow-sm: 0 1px 3px rgba(0,37,105,0.08), 0 1px 2px rgba(0,37,105,0.05);
@@ -123,7 +126,7 @@ main {
 .progress-line { flex: 1; height: 2px; background: var(--border); max-width: 40px; }
 
 /* Route grid */
-.route-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+.route-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px; }
 .route-card {
   background: var(--surface);
   border: 2px solid var(--border);
@@ -138,6 +141,7 @@ main {
 .route-card:hover { border-color: var(--navy); box-shadow: var(--shadow); }
 .route-card.sel-lo { border-color: var(--lo-color); background: var(--lo-dim); }
 .route-card.sel-task { border-color: var(--task-color); background: var(--task-dim); }
+.route-card.sel-support { border-color: var(--support-color); background: var(--support-dim); }
 .route-card-icon { font-size: 1.5rem; margin-bottom: 10px; display: block; }
 .route-card-title { font-size: var(--fs-base); font-weight: bold; color: var(--navy); margin-bottom: 5px; }
 .route-card-desc { font-size: var(--fs-sm); color: var(--text-dim); line-height: 1.55; }
@@ -149,6 +153,7 @@ main {
 }
 .sel-lo .route-badge { opacity: 1; background: var(--lo-color); color: white; }
 .sel-task .route-badge { opacity: 1; background: var(--task-color); color: white; }
+.sel-support .route-badge { opacity: 1; background: var(--support-color); color: white; }
 .route-card.coming-soon { opacity: 0.4; cursor: default; }
 .route-card.coming-soon:hover { border-color: var(--border); box-shadow: var(--shadow-sm); }
 .coming-soon-tag { font-size: var(--fs-sm); color: var(--text-dimmer); margin-top: 8px; display: block; font-style: italic; }
@@ -282,6 +287,7 @@ textarea { min-height: 130px; }
 }
 .destination-chip.lo { background: var(--lo-dim); border: 1.5px solid var(--lo-border); color: var(--lo-color); }
 .destination-chip.task { background: var(--task-dim); border: 1.5px solid var(--task-border); color: var(--task-color); }
+.destination-chip.support { background: var(--support-dim); border: 1.5px solid var(--support-border); color: var(--support-color); }
 
 /* Refinement notes */
 .refinement-box {
@@ -364,6 +370,8 @@ textarea { min-height: 130px; }
 .btn-lo:hover { background: #4a2d8a; }
 .btn-task { background: var(--task-color); }
 .btn-task:hover { background: #155f38; }
+.btn-support { background: var(--support-color); }
+.btn-support:hover { background: #0b5e74; }
 
 /* Success */
 .success-screen { text-align: center; padding: 64px 24px; }
