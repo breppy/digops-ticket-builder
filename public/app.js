@@ -453,9 +453,12 @@ Return exactly:
     statusEl.textContent = 'claude-sonnet-4-6 · drafting';
     const res = await fetch('/api/claude', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: systemPrompt, messages: [{ role: 'user', content: state.description }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: state.description }] })
     });
     const data = await res.json();
+    if (!res.ok || !Array.isArray(data.content)) {
+      throw new Error(data.error?.message || JSON.stringify(data.error || data) || 'Claude API error');
+    }
     let text = '';
     for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
