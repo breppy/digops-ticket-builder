@@ -52,7 +52,7 @@ async function loadProjectsAndMilestones() {
         filterByFormula: `NOT(OR(${closedList}))`,
       }),
       airtableList(PROJECT_BASE, MILESTONES_TABLE, {
-        fields: ['Milestone / Deliverable', 'Projects', 'Start Date'],
+        fields: ['Phase', 'Projects', 'Start Date'],
         filterByFormula: 'NOT({Status}="Completed")',
       }),
     ]);
@@ -66,10 +66,10 @@ async function loadProjectsAndMilestones() {
         const sa = a.fields['Start Date'] || '9999-12-31';
         const sb = b.fields['Start Date'] || '9999-12-31';
         if (sa !== sb) return sa < sb ? -1 : 1;
-        return (a.fields['Milestone / Deliverable'] || '').localeCompare(b.fields['Milestone / Deliverable'] || '');
+        return (a.fields['Phase'] || '').localeCompare(b.fields['Phase'] || '');
       })
       .forEach(m => {
-        const name = m.fields['Milestone / Deliverable'] || '(untitled milestone)';
+        const name = m.fields['Phase'] || '(untitled milestone)';
         (m.fields['Projects'] || []).forEach(pid => {
           (MILESTONES[pid] = MILESTONES[pid] || []).push({ id: m.id, name });
         });
