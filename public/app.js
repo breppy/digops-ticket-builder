@@ -449,13 +449,21 @@ Return exactly:
 
   const systemPrompt = state.route === 'support' ? supportSystemPrompt : workSystemPrompt;
 
+  const payload = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: state.description }] });
+  const maxAttempts = 3;
   try {
-    statusEl.textContent = 'claude-sonnet-4-6 · drafting';
-    const res = await fetch('/api/claude', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: state.description }] })
-    });
-    const data = await res.json();
+    let data, res;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      statusEl.textContent = attempt === 1 ? 'claude-sonnet-4-6 · drafting' : `claude-sonnet-4-6 · retrying (${attempt}/${maxAttempts})…`;
+      res = await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
+      data = await res.json();
+      const isOverloaded = res.status === 529 || data.error?.type === 'overloaded_error';
+      if (isOverloaded && attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, attempt * 2000));
+        continue;
+      }
+      break;
+    }
     if (!res.ok || !Array.isArray(data.content)) {
       throw new Error(data.error?.message || JSON.stringify(data.error || data) || 'Claude API error');
     }
