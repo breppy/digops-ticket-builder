@@ -345,9 +345,10 @@ ${routeContext}
 
 DESCRIPTION FORMAT — match the structure to the ticket type exactly:
 
+IMPORTANT: Do NOT use "Context" as a section header. The description must open with 1–2 sentences of plain prose (no header label) that summarize why this work exists or what the problem is. Airtable list views truncate descriptions, so the opening line must be informative on its own.
+
 Bug:
-**Context**
-What triggered this / where it was found.
+[1–2 sentence summary of what is broken and where — no header label]
 
 **Steps to reproduce**
 1. Step one
@@ -365,8 +366,7 @@ What is happening instead.
 
 ---
 Enhancement | Config Change | Campaign Setup | Content Update | Work Ticket:
-**Context**
-Why this work is needed.
+[1–2 sentence summary of why this work is needed — no header label]
 
 **What needs to happen**
 Specific changes or deliverables required.
@@ -377,8 +377,7 @@ Specific changes or deliverables required.
 
 ---
 Spike | Audit | Spike/Audit:
-**Context**
-What question or uncertainty this spike is resolving.
+[1–2 sentence summary of the question or uncertainty this spike is resolving — no header label]
 
 **Scope**
 What is in scope. What is explicitly out of scope.
@@ -390,8 +389,7 @@ The specific deliverable when done — a decision, document, recommendation, or 
 
 ---
 Other:
-**Context**
-Background and reason for the work.
+[1–2 sentence summary of the background and reason for the work — no header label]
 
 **What needs to happen**
 What needs to be done.
