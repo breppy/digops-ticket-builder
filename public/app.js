@@ -1,7 +1,7 @@
 const BASES = {
   lo:      { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', attachmentFieldId: 'fldVbU5E2bNQjyKtD' },
   task:    { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww', attachmentFieldId: 'fld5amAF4Nb1xzaSf' },
-  support: { baseId: 'appYKt9u8weWUuzFd', tableId: 'tblfISsI1vf7fa6No' }, // DigOps Support Desk → Tickets (no attachment field)
+  support: { baseId: 'appaWCfWoKzpsyZiz', tableId: 'tblpmiVoczcBNfMLY', attachmentFieldId: 'fldaQ7DoOLvHgILbk' },
 };
 
 // Attachment limits. Raw blob is capped so the base64 payload (≈ +33%) stays
@@ -17,9 +17,8 @@ const PROJECTS_TABLE = 'tblwp9bKQbieVV58G';
 const MILESTONES_TABLE = 'tblel2WDV5glyxrZe';
 const TEAM_TABLE = 'tblPHYciSmiGv3Eo3';
 
-// DigOps Support Desk
-const SUPPORT_BASE = 'appYKt9u8weWUuzFd';
-const SUPPORT_CATEGORIES_TABLE = 'tbl3Wn6lWWRQxUtxv';
+// Support & System Status base (Incidents table)
+const SUPPORT_BASE = 'appaWCfWoKzpsyZiz';
 
 // Project statuses treated as finished — these are hidden from the dropdown.
 // Anything else (including projects with no status set) counts as active.
@@ -140,37 +139,13 @@ async function loadAssignees() {
   }
 }
 
-// Loads support categories into the support-ticket category dropdown.
-async function loadSupportCategories() {
-  const sel = document.getElementById('supportCategory');
-  if (!sel) return;
-  try {
-    const cats = await airtableList(SUPPORT_BASE, SUPPORT_CATEGORIES_TABLE, {
-      fields: ['Category Name'],
-    });
-    const named = cats.filter(c => c.fields['Category Name']);
-    named.sort((a, b) => a.fields['Category Name'].localeCompare(b.fields['Category Name']));
-    sel.innerHTML = '<option value="">— select a category —</option>';
-    named.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.textContent = c.fields['Category Name'];
-      sel.appendChild(o);
-    });
-    sel.disabled = false;
-  } catch (err) {
-    console.error('Failed to load support categories:', err);
-    sel.innerHTML = '<option value="">— couldn’t load categories, refresh to retry —</option>';
-    sel.disabled = true;
-  }
-}
 
 let state = {
   route: null,
   loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '',
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '',
-  supportPriority: null, supportCategory: '', supportCategoryName: '',
+  supportPriority: null, supportCategory: '', supportAffectedSystems: [],
   supportReporter: '', supportReporterName: '', supportAssignee: '',
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
@@ -198,7 +173,7 @@ function goToStep2() {
   document.getElementById('taskFields').classList.toggle('hidden', state.route !== 'task');
   document.getElementById('supportFields').classList.toggle('hidden', state.route !== 'support');
   // The Tickets table has no attachment field, so hide the uploader for support.
-  document.getElementById('attachmentsCard').classList.toggle('hidden', state.route === 'support');
+  document.getElementById('attachmentsCard').classList.remove('hidden');
   if (state.route === 'lo') {
     document.getElementById('step2Title').textContent = 'LO Work Item details';
     document.getElementById('step2Sub').textContent = 'Pick a type and priority, then describe the work.';
@@ -239,7 +214,6 @@ function goToStep3fresh() {
     const catSel = document.getElementById('supportCategory');
     if (!catSel.value) { alert('Please select a category.'); return; }
     state.supportCategory = catSel.value;
-    state.supportCategoryName = catSel.options[catSel.selectedIndex].text;
     const repSel = document.getElementById('supportReporter');
     if (!repSel.value) { alert('Please select who reported this.'); return; }
     state.supportReporter = repSel.value;
@@ -326,6 +300,15 @@ function onProjectChange() {
     milestones.forEach(m => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name; ms.appendChild(o); });
     ms.disabled = false;
   }
+}
+
+function toggleAffectedSystem(sys) {
+  const idx = state.supportAffectedSystems.indexOf(sys);
+  if (idx >= 0) state.supportAffectedSystems.splice(idx, 1);
+  else state.supportAffectedSystems.push(sys);
+  document.querySelectorAll('#supportAffectedSystems .sys-chip').forEach(btn => {
+    btn.classList.toggle('active', state.supportAffectedSystems.includes(btn.textContent.trim()));
+  });
 }
 
 async function runClaude() {
@@ -419,38 +402,38 @@ Return exactly:
   "notes_for_refinement": []
 }`;
 
-  const supportSystemPrompt = `You are a support-desk assistant for the DigOps team at Memorial Sloan Kettering Cancer Center. A colleague is reporting an issue they ran into (this is an inbound support ticket, not internal planned work). Turn their rough report into a clear, well-structured support ticket.
+  const supportSystemPrompt = `You are an incident-triage assistant for the DigOps team at Memorial Sloan Kettering Cancer Center. A colleague is reporting a problem or question (inbound support, not planned work). Turn their rough report into a clear, well-structured incident record.
 
 CRITICAL RULES:
-1. Never ask clarifying questions. Write the best possible ticket from the input.
+1. Never ask clarifying questions. Write the best possible record from the input.
 2. Return ONLY valid JSON — no markdown fences, no explanation, no preamble.
-3. The "description" field is PLAIN TEXT — no markdown, no asterisks, no "#" headers. It renders in a plain-text field. Use plain labels and line breaks only.
+3. The "description" field uses markdown — it renders in a richText field. Do NOT open with a "Context" or "Issue" header label. Start with 1-2 sentences of plain prose that summarize what is wrong.
 
-Context: Support category: ${state.supportCategoryName || 'not specified'}. Priority: ${state.supportPriority || 'not specified'}.
+Context: Category: ${state.supportCategory || 'not specified'}. Priority: ${state.supportPriority || 'not specified'}.
 
-DESCRIPTION FORMAT (plain text, use these labels exactly, omit a section if there's nothing real to put in it):
-Issue
-A one or two sentence summary of what is going wrong.
+DESCRIPTION FORMAT (markdown, omit sections that have nothing real to say):
 
-Where it happens
-The page, form, email, tool, or system involved, and who/what is affected.
+[1-2 sentence incident summary — no header label — this is the first thing triage reads]
 
-Steps to reproduce
-1. First step
-2. Second step
-(Only include if the report implies a sequence.)
+**Where it happens**
+The specific page, URL, form, email, tool, or system involved. Who or what is affected and how broadly.
 
-Expected vs. actual
-What the reporter expected, and what happened instead.
+**Steps to reproduce**
+1. Step one
+2. Step two
+(Only include if the report implies a reproducible sequence. Skip for general questions.)
 
-FLAGS: Genuine missing information that the support owner will need to act, max 3. Empty array if the report is clear enough.
+**Expected vs. actual**
+What the reporter expected to happen, and what actually happened instead.
 
-NOTES FOR REFINEMENT: Open questions for whoever triages this ticket — e.g. "Which browser/device?", "Confirm the exact URL", "Is this affecting all users or just one?". Only include genuinely missing specifics. Empty array if nothing is needed.
+FLAGS: Genuine missing info the support owner needs to act, max 3. Empty array if report is actionable.
+
+NOTES FOR REFINEMENT: Open questions for triage — e.g. "Which browser/device?", "Is this one user or all users?", "Confirm exact URL". Only genuinely missing specifics. Empty array if not needed.
 
 Return exactly:
 {
-  "name": "concise issue title, max 60 chars",
-  "description": "plain text per above",
+  "name": "concise incident title, max 60 chars",
+  "description": "markdown per above",
   "flags": [],
   "notes_for_refinement": []
 }`;
@@ -585,11 +568,12 @@ function buildReviewUI() {
     if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee], false);
     if (state.loDate) addField('Due Date', '_', state.loDate, false);
   } else if (isSupport) {
-    addField('Category', '_', state.supportCategoryName, false);
+    addField('Issue Category', '_', state.supportCategory, false);
     addField('Priority', '_', state.supportPriority, false);
+    if (state.supportAffectedSystems.length > 0) addField('Affected Systems', '_', state.supportAffectedSystems.join(', '), false);
     addField('Reporter', '_', state.supportReporterName, false);
     if (state.supportAssignee) addField('Assignee', '_', TEAM_NAMES[state.supportAssignee], false);
-    addField('Status', '_', 'Open', false);
+    addField('Status', '_', 'Investigating', false);
   } else {
     addField('Project', '_', state.taskProjectName, false);
     addField('Milestone', '_', state.taskMilestoneName, false);
@@ -629,12 +613,23 @@ async function submitTicket() {
     if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
     if (state.loReporterName) fields['Reporter'] = state.loReporterName;
   } else if (isSupport) {
-    fields = { 'Title': draft.name || 'Untitled', 'Description': finalDescription || '', 'Priority': state.supportPriority || 'Medium', 'Status': 'Open' };
-    if (state.supportCategory) fields['Category'] = [state.supportCategory];
-    if (state.supportReporterName) fields['Reporter'] = state.supportReporterName;
-    // Assignee here is a Collaborator field — set by Airtable user account.
+    // Embed Claude's title as a bold first line since Incidents has no separate title field.
+    const incidentDesc = `**${draft.name || 'Untitled'}**\n\n${finalDescription}`;
+    fields = {
+      'Description of Issue': incidentDesc,
+      'Priority': state.supportPriority || 'Medium',
+      'Status': 'Investigating',
+      'Date': new Date().toISOString(),
+    };
+    if (state.supportCategory) fields['Issue Category'] = state.supportCategory;
+    if (state.supportAffectedSystems.length > 0) fields['Affected Systems'] = state.supportAffectedSystems;
+    // Reporter is singleCollaborator — needs {id} object.
+    if (state.supportReporter && TEAM_USERS[state.supportReporter]) {
+      fields['Reporter'] = { id: TEAM_USERS[state.supportReporter].id };
+    }
+    // Owner/Assignee is multipleCollaborators — needs [{id}] array.
     if (state.supportAssignee && TEAM_USERS[state.supportAssignee]) {
-      fields['Assignee'] = { id: TEAM_USERS[state.supportAssignee].id };
+      fields['Owner/Assignee'] = [{ id: TEAM_USERS[state.supportAssignee].id }];
     }
   } else {
     fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
@@ -789,7 +784,8 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  document.querySelectorAll('#supportAffectedSystems .sys-chip').forEach(c => c.classList.remove('active'));
   renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
@@ -808,4 +804,3 @@ updateProgress(1);
 setupUploads();
 loadProjectsAndMilestones();
 loadAssignees();
-loadSupportCategories();

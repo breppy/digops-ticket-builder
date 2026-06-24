@@ -214,20 +214,38 @@
     <!-- Support fields -->
     <div id="supportFields" class="hidden">
       <div class="card">
-        <div class="card-title">Ticket Properties</div>
+        <div class="card-title">Incident Properties</div>
         <div class="field-group">
           <div class="field-label">Priority <span class="req">required</span></div>
           <div class="priority-row" id="supportPriorityRow">
+            <button class="priority-chip" onclick="selectPriority('Critical','support')">🚨 Critical</button>
             <button class="priority-chip" onclick="selectPriority('High','support')">🔴 High</button>
             <button class="priority-chip" onclick="selectPriority('Medium','support')">🟡 Medium</button>
             <button class="priority-chip" onclick="selectPriority('Low','support')">🔵 Low</button>
           </div>
         </div>
         <div class="field-group">
-          <div class="field-label">Category <span class="req">required</span></div>
-          <select id="supportCategory" disabled>
-            <option value="">— loading categories… —</option>
+          <div class="field-label">Issue Category <span class="req">required</span></div>
+          <select id="supportCategory">
+            <option value="">— select a category —</option>
+            <option>Website Down/Error</option>
+            <option>Participant Center Issue</option>
+            <option>Team or Personal Page Problem</option>
+            <option>Donation/Purchase Issue</option>
+            <option>Email Problem</option>
+            <option>Bug/Something Not Working</option>
+            <option>Website Question</option>
+            <option>Other/Not Sure</option>
           </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Affected Systems <span class="opt">optional</span></div>
+          <div class="sys-chips" id="supportAffectedSystems">
+            <button class="sys-chip" type="button" onclick="toggleAffectedSystem('Luminate Online')">Luminate Online</button>
+            <button class="sys-chip" type="button" onclick="toggleAffectedSystem('Drupal Website')">Drupal Website</button>
+            <button class="sys-chip" type="button" onclick="toggleAffectedSystem('Emails')">Emails</button>
+            <button class="sys-chip" type="button" onclick="toggleAffectedSystem('Payment Services')">Payment Services</button>
+          </div>
         </div>
         <div class="field-group">
           <div class="field-label">Reported by <span class="req">required</span></div>
