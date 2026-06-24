@@ -521,14 +521,8 @@ Team context:
 PROJECT DESCRIPTION (plain text):
 2–4 sentences. What this project is, why it exists, and what success looks like. Written for a stakeholder audience.
 
-PHASE DESCRIPTIONS (one per phase, markdown richText):
-Start each with 1–2 sentences of plain prose explaining what this phase accomplishes and why it matters. Then include only sections you can fill with real content — skip empty sections entirely:
-
-**In scope**
-Key deliverables and activities for this phase.
-
-**Success criteria**
-Specific, verifiable signals that this phase is complete.
+PHASE DESCRIPTIONS (one per phase, plain prose only — no headers, no bullet points):
+Write 2–3 sentences per phase. State what the phase accomplishes, why it matters, and the key condition for it to be considered done. Keep it concise — the team will expand these in Airtable.
 
 FLAGS: Genuine scope gaps or risks in the project definition, max 3. Empty array if brief is clear.
 
@@ -556,7 +550,9 @@ Return exactly:
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       statusEl.textContent = attempt === 1 ? 'claude-sonnet-4-6 · drafting' : `claude-sonnet-4-6 · retrying (${attempt}/${maxAttempts})…`;
       res = await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
-      data = await res.json();
+      const rawText = await res.text();
+      try { data = JSON.parse(rawText); }
+      catch (_) { throw new Error('Server error (non-JSON response). Check the Vercel function logs.'); }
       const isOverloaded = res.status === 529 || data.error?.type === 'overloaded_error';
       if (isOverloaded && attempt < maxAttempts) {
         await new Promise(r => setTimeout(r, attempt * 2000));
