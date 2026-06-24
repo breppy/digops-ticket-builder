@@ -61,11 +61,11 @@
         <div class="route-card-title">Support Ticket</div>
         <div class="route-card-desc">An issue reported by someone — a bug, outage, or problem for the DigOps Support Desk.</div>
       </button>
-      <button class="route-card coming-soon" disabled>
+      <button class="route-card" id="routeProject" onclick="selectRoute('project')">
+        <span class="route-badge">Selected</span>
         <span class="route-card-icon">🗂️</span>
         <div class="route-card-title">New Project</div>
-        <div class="route-card-desc">New initiative through PI Planning and DevISO scoring.</div>
-        <span class="coming-soon-tag">Coming soon</span>
+        <div class="route-card-desc">Scope a new initiative with a phase template and all four project phases.</div>
       </button>
     </div>
 
@@ -258,6 +258,93 @@
           <select id="supportAssignee">
             <option value="">— unassigned —</option>
           </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project fields -->
+    <div id="projectFields" class="hidden">
+      <div class="card">
+        <div class="card-title">Project Identity</div>
+        <div class="field-group">
+          <div class="field-label">Project Name <span class="req">required</span></div>
+          <input type="text" id="projectNameInput" placeholder="e.g. CFS Captain Resource Center Redesign">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Project Type <span class="req">required</span></div>
+          <select id="projectType">
+            <option value="">— select type —</option>
+            <option value="New Initative">New Initiative</option>
+            <option value="Enhancement Project">Enhancement Project</option>
+            <option value="Recurring Project">Recurring Project</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Program / Initiative <span class="opt">optional</span></div>
+          <select id="projectProgram">
+            <option value="">— select program —</option>
+            <option value="Fundraising Events">Fundraising Events</option>
+            <option value="Digital Marketing">Digital Marketing</option>
+            <option value="Platform/Infrastructur">Platform / Infrastructure</option>
+            <option value="OGP">OGP</option>
+            <option value="Dev. Programs">Dev. Programs</option>
+            <option value="Community Fundraising">Community Fundraising</option>
+            <option value="Fred's Team">Fred's Team</option>
+            <option value="Cycle for Survival">Cycle for Survival</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Priority <span class="req">required</span></div>
+          <div class="priority-row" id="projectPriorityRow">
+            <button class="priority-chip" onclick="selectPriority('Critical','project')">🚨 Critical</button>
+            <button class="priority-chip" onclick="selectPriority('High','project')">🔴 High</button>
+            <button class="priority-chip" onclick="selectPriority('Medium','project')">🟡 Medium</button>
+            <button class="priority-chip" onclick="selectPriority('Low','project')">🔵 Low</button>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Project Owner <span class="opt">optional</span></div>
+          <select id="projectOwner">
+            <option value="">— select owner —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Phase Template <span class="req">required</span></div>
+        <div class="hint" style="margin-bottom:12px">Choose the template that best matches the nature of this work. It sets the four phases that will be created in Airtable.</div>
+        <div class="template-grid" id="templateGrid">
+          <button class="template-card" type="button" onclick="selectTemplate('Program Feature Build')">
+            <div class="template-name">Program Feature Build</div>
+            <div class="template-desc">Goal Accelerator, Email Builder, Captain Resource Center, Ticketing changes</div>
+          </button>
+          <button class="template-card" type="button" onclick="selectTemplate('Infrastructure / Platform')">
+            <div class="template-name">Infrastructure / Platform</div>
+            <div class="template-desc">Domain migration, QA pipeline, GTM/GA4 consolidation, tech debt</div>
+          </button>
+          <button class="template-card" type="button" onclick="selectTemplate('Ops-Led Initiative')">
+            <div class="template-name">Ops-Led Initiative</div>
+            <div class="template-desc">LO group governance, vendor evaluation, segmentation, process rollout</div>
+          </button>
+          <button class="template-card" type="button" onclick="selectTemplate('Research / Discovery Only')">
+            <div class="template-name">Research / Discovery Only</div>
+            <div class="template-desc">Captain surveys, chatbot log analysis, contact us redesign, audits</div>
+          </button>
+        </div>
+        <div class="template-phases hidden" id="templatePhasesPreview"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Timeline</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="field-group" style="margin-bottom:0">
+            <div class="field-label">Start date <span class="opt">optional</span></div>
+            <input type="date" id="projectStart">
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <div class="field-label">Target end date <span class="opt">optional</span></div>
+            <input type="date" id="projectEnd">
+          </div>
         </div>
       </div>
     </div>

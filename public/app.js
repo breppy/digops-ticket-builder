@@ -2,6 +2,34 @@ const BASES = {
   lo:      { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblRxiCsdAEjz6oFc', attachmentFieldId: 'fldVbU5E2bNQjyKtD' },
   task:    { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblIOY0UzgZZq51ww', attachmentFieldId: 'fld5amAF4Nb1xzaSf' },
   support: { baseId: 'appaWCfWoKzpsyZiz', tableId: 'tblpmiVoczcBNfMLY', attachmentFieldId: 'fldaQ7DoOLvHgILbk' },
+  project: { baseId: 'appJCpsSpgD07hGLf', tableId: 'tblwp9bKQbieVV58G' },
+};
+
+const PHASE_TEMPLATES = {
+  'Program Feature Build': [
+    { name: 'Phase 0: Discovery & UX/Design', hard: true },
+    { name: 'Phase 1: Engineering/QA — Build & Launch [Program A]', hard: false },
+    { name: 'Phase 2: Engineering/QA — Build & Launch [Program B]', hard: false },
+    { name: 'Phase 3: Automation, Documentation & Stabilization', hard: false },
+  ],
+  'Infrastructure / Platform': [
+    { name: 'Phase 0: Discovery & Technical Scoping', hard: true },
+    { name: 'Phase 1: Urgent / Critical Path Remediation', hard: false },
+    { name: 'Phase 2: Follow-up Cleanup & Hardening', hard: false },
+    { name: 'Phase 3: Governance, Documentation & Monitoring', hard: false },
+  ],
+  'Ops-Led Initiative': [
+    { name: 'Phase 0: Alignment & Decision Gates', hard: true },
+    { name: 'Phase 1: Foundation Build / Reference Implementation', hard: false },
+    { name: 'Phase 2: Program-by-Program Rollout', hard: false },
+    { name: 'Phase 3: Enforcement, Sustainment & Review', hard: false },
+  ],
+  'Research / Discovery Only': [
+    { name: 'Phase 0: Research Design & Stakeholder Alignment', hard: true },
+    { name: 'Phase 1: Execution & Data Collection', hard: false },
+    { name: 'Phase 2: Analysis & Synthesis', hard: false },
+    { name: 'Phase 3: Findings Brief & Recommendations', hard: false },
+  ],
 };
 
 // Attachment limits. Raw blob is capped so the base64 payload (≈ +33%) stays
@@ -105,6 +133,7 @@ async function loadAssignees() {
     document.getElementById('loAssignee'),
     document.getElementById('taskAssignee'),
     document.getElementById('supportAssignee'),
+    document.getElementById('projectOwner'),
   ];
   const reporterSelects = [
     document.getElementById('loReporter'),
@@ -147,6 +176,8 @@ let state = {
   taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '',
   supportPriority: null, supportCategory: '', supportAffectedSystems: [],
   supportReporter: '', supportReporterName: '', supportAssignee: '',
+  projectName: '', projectType: '', projectProgram: '', projectPriority: null,
+  projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '',
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
 
@@ -172,7 +203,7 @@ function goToStep2() {
   document.getElementById('loFields').classList.toggle('hidden', state.route !== 'lo');
   document.getElementById('taskFields').classList.toggle('hidden', state.route !== 'task');
   document.getElementById('supportFields').classList.toggle('hidden', state.route !== 'support');
-  // The Tickets table has no attachment field, so hide the uploader for support.
+  document.getElementById('projectFields').classList.toggle('hidden', state.route !== 'project');
   document.getElementById('attachmentsCard').classList.remove('hidden');
   if (state.route === 'lo') {
     document.getElementById('step2Title').textContent = 'LO Work Item details';
@@ -180,6 +211,9 @@ function goToStep2() {
   } else if (state.route === 'task') {
     document.getElementById('step2Title').textContent = 'Project Task details';
     document.getElementById('step2Sub').textContent = 'Select the project, milestone, and task type.';
+  } else if (state.route === 'project') {
+    document.getElementById('step2Title').textContent = 'New Project details';
+    document.getElementById('step2Sub').textContent = 'Name the project, pick a phase template, and describe your goals.';
   } else {
     document.getElementById('step2Title').textContent = 'Support Ticket details';
     document.getElementById('step2Sub').textContent = 'Set priority and category, then describe the issue.';
@@ -219,7 +253,7 @@ function goToStep3fresh() {
     state.supportReporter = repSel.value;
     state.supportReporterName = repSel.options[repSel.selectedIndex].text;
     state.supportAssignee = document.getElementById('supportAssignee').value;
-  } else {
+  } else if (state.route === 'task') {
     if (!document.getElementById('taskProject').value) { alert('Please select a project.'); return; }
     if (!document.getElementById('taskMilestone').value) { alert('Please select a milestone.'); return; }
     if (!state.taskType) { alert('Please select a task type.'); return; }
@@ -236,6 +270,20 @@ function goToStep3fresh() {
     state.taskStart = document.getElementById('taskStart').value;
     state.taskDue = document.getElementById('taskDue').value;
     if (state.taskAssignee && !state.taskDue) { alert('Due date is required when an assignee is selected.'); return; }
+  } else if (state.route === 'project') {
+    const nameInput = document.getElementById('projectNameInput');
+    if (!nameInput.value.trim()) { alert('Please enter a project name.'); return; }
+    const typeSel = document.getElementById('projectType');
+    if (!typeSel.value) { alert('Please select a project type.'); return; }
+    if (!state.projectPriority) { alert('Please select a priority.'); return; }
+    if (!state.projectTemplate) { alert('Please select a phase template.'); return; }
+    state.projectName = nameInput.value.trim();
+    state.projectType = typeSel.value;
+    state.projectProgram = document.getElementById('projectProgram').value;
+    state.projectOwner = document.getElementById('projectOwner').value;
+    state.projectOwnerName = state.projectOwner ? TEAM_NAMES[state.projectOwner] : '';
+    state.projectStartDate = document.getElementById('projectStart').value;
+    state.projectEndDate = document.getElementById('projectEnd').value;
   }
   state.description = desc;
   showStep(3);
@@ -253,8 +301,9 @@ function selectRoute(r) {
   document.getElementById('routeLO').className = 'route-card' + (r === 'lo' ? ' sel-lo' : '');
   document.getElementById('routeTask').className = 'route-card' + (r === 'task' ? ' sel-task' : '');
   document.getElementById('routeSupport').className = 'route-card' + (r === 'support' ? ' sel-support' : '');
+  document.getElementById('routeProject').className = 'route-card' + (r === 'project' ? ' sel-project' : '');
   document.getElementById('step1Next').disabled = false;
-  const btnClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support' }[r] || '';
+  const btnClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support', project: ' btn-project' }[r] || '';
   document.getElementById('step1Next').className = 'btn-primary' + btnClass;
 }
 
@@ -268,9 +317,9 @@ function selectType(t, route) {
 }
 
 function selectPriority(p, route) {
-  const key = { lo: 'loPriority', task: 'taskPriority', support: 'supportPriority' }[route];
+  const key = { lo: 'loPriority', task: 'taskPriority', support: 'supportPriority', project: 'projectPriority' }[route];
   state[key] = p;
-  const rowId = { lo: 'loPriorityRow', task: 'taskPriorityRow', support: 'supportPriorityRow' }[route];
+  const rowId = { lo: 'loPriorityRow', task: 'taskPriorityRow', support: 'supportPriorityRow', project: 'projectPriorityRow' }[route];
   document.querySelectorAll('#' + rowId + ' .priority-chip').forEach(c => {
     c.className = 'priority-chip';
     const label = c.textContent.replace(/[🚨🔴🟡🔵]/g,'').trim();
@@ -309,6 +358,21 @@ function toggleAffectedSystem(sys) {
   document.querySelectorAll('#supportAffectedSystems .sys-chip').forEach(btn => {
     btn.classList.toggle('active', state.supportAffectedSystems.includes(btn.textContent.trim()));
   });
+}
+
+function selectTemplate(t) {
+  state.projectTemplate = t;
+  document.querySelectorAll('.template-card').forEach(c => {
+    const nameEl = c.querySelector('.template-name');
+    c.classList.toggle('sel-project', !!nameEl && nameEl.textContent.trim() === t);
+  });
+  const preview = document.getElementById('templatePhasesPreview');
+  const phases = PHASE_TEMPLATES[t] || [];
+  preview.innerHTML = phases.map((p, i) => {
+    const shortName = p.name.replace(/^Phase \d: /, '');
+    return `<div class="template-phase-row"><span class="template-phase-num">Phase ${i}</span><span>${escHtml(shortName)}${p.hard ? '<span class="phase-hard-badge">Hard gate</span>' : ''}</span></div>`;
+  }).join('');
+  preview.classList.remove('hidden');
 }
 
 async function runClaude() {
@@ -438,7 +502,50 @@ Return exactly:
   "notes_for_refinement": []
 }`;
 
-  const systemPrompt = state.route === 'support' ? supportSystemPrompt : workSystemPrompt;
+  const projectSystemPrompt = `You are a project-scoping assistant for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
+
+A team member is creating a new project. They selected the "${state.projectTemplate}" phase template with these four phases:
+${(PHASE_TEMPLATES[state.projectTemplate] || []).map((p, i) => `  Phase ${i}: ${p.name.replace(/^Phase \d: /, '')}`).join('\n')}
+
+CRITICAL RULES:
+1. Never ask clarifying questions. Generate the best possible records from the input.
+2. Return ONLY valid JSON — no markdown fences, no explanation, no preamble.
+3. "description" is PLAIN TEXT — stored in a multilineText field. No markdown.
+4. Each "phase_descriptions" entry is MARKDOWN — stored in a richText field. Do not open with a header label. Start with 1–2 sentences of plain prose about what this phase accomplishes.
+
+Team context:
+- LO = Luminate Online by Blackbaud (peer-to-peer fundraising, email, event ticketing)
+- Programs: Cycle for Survival (CFS), Fred's Team, Comedy vs. Cancer
+- Phase 0 is ALWAYS a hard gate — nothing in later phases begins until Phase 0 is fully complete and approved
+
+PROJECT DESCRIPTION (plain text):
+2–4 sentences. What this project is, why it exists, and what success looks like. Written for a stakeholder audience.
+
+PHASE DESCRIPTIONS (one per phase, markdown richText):
+Start each with 1–2 sentences of plain prose explaining what this phase accomplishes and why it matters. Then include only sections you can fill with real content — skip empty sections entirely:
+
+**In scope**
+Key deliverables and activities for this phase.
+
+**Success criteria**
+Specific, verifiable signals that this phase is complete.
+
+FLAGS: Genuine scope gaps or risks in the project definition, max 3. Empty array if brief is clear.
+
+NOTES FOR REFINEMENT: Open questions the team should answer before or during Discovery — unclear scope boundaries, missing stakeholder decisions, technical unknowns, or dependencies to confirm. Empty array if brief is sufficient.
+
+Return exactly:
+{
+  "name": "concise project name, max 60 chars",
+  "description": "plain text project overview",
+  "phase_descriptions": ["phase 0 markdown", "phase 1 markdown", "phase 2 markdown", "phase 3 markdown"],
+  "flags": [],
+  "notes_for_refinement": []
+}`;
+
+  const systemPrompt = state.route === 'support' ? supportSystemPrompt
+    : state.route === 'project' ? projectSystemPrompt
+    : workSystemPrompt;
 
   const payload = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: state.description }] });
   const maxAttempts = 3;
@@ -477,13 +584,16 @@ function buildReviewUI() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
   const isSupport = state.route === 'support';
+  const isProject = state.route === 'project';
   const chip = document.getElementById('destinationChip');
   chip.className = 'destination-chip ' + state.route;
   chip.innerHTML = isLO
     ? '⚙️ &nbsp;LO Work Items → Project Dashboard'
     : isSupport
-      ? '🛟 &nbsp;Tickets → DigOps Support Desk'
-      : '📋 &nbsp;Task Tracker → Project Dashboard';
+      ? '🛟 &nbsp;Tickets → Support &amp; System Status'
+      : isProject
+        ? '🗂️ &nbsp;New Project → Project Dashboard'
+        : '📋 &nbsp;Task Tracker → Project Dashboard';
 
   const flagsBox = document.getElementById('flagsBox');
   const flagsList = document.getElementById('flagsList');
@@ -542,7 +652,7 @@ function buildReviewUI() {
     rfBox.style.marginTop = '12px';
     const rfLabel = document.createElement('div');
     rfLabel.className = 'refinement-box-label';
-    rfLabel.textContent = isSupport ? '📋 Open Questions for Triage' : '📋 Notes for Refinement';
+    rfLabel.textContent = isSupport ? '📋 Open Questions for Triage' : isProject ? '📋 Open Questions for Discovery' : '📋 Notes for Refinement';
     rfBox.appendChild(rfLabel);
     const rfTa = document.createElement('textarea');
     rfTa.value = state.refinementNotes.map(n => '- ' + n).join('\n');
@@ -554,7 +664,9 @@ function buildReviewUI() {
     rfHint.className = 'refinement-hint';
     rfHint.textContent = isSupport
       ? 'These open questions will be appended to the ticket description for triage.'
-      : 'These open questions will be appended to the ticket description for refinement.';
+      : isProject
+        ? 'These open questions will be appended to the project description for the Discovery phase.'
+        : 'These open questions will be appended to the ticket description for refinement.';
     rfBox.appendChild(rfHint);
     container.appendChild(rfBox);
   }
@@ -574,6 +686,48 @@ function buildReviewUI() {
     addField('Reporter', '_', state.supportReporterName, false);
     if (state.supportAssignee) addField('Assignee', '_', TEAM_NAMES[state.supportAssignee], false);
     addField('Status', '_', 'Investigating', false);
+  } else if (isProject) {
+    addField('Project Type', '_', state.projectType, false);
+    addField('Priority', '_', state.projectPriority, false);
+    if (state.projectProgram) addField('Program / Initiative', '_', state.projectProgram, false);
+    if (state.projectOwner) addField('Project Owner', '_', state.projectOwnerName, false);
+    addField('Status', '_', 'Discovery', false);
+    if (state.projectStartDate) addField('Start Date', '_', state.projectStartDate, false);
+    if (state.projectEndDate) addField('Target End Date', '_', state.projectEndDate, false);
+
+    // Phase descriptions (editable)
+    const phases = PHASE_TEMPLATES[state.projectTemplate] || [];
+    if (phases.length > 0) {
+      const phSectionHr = document.createElement('hr'); phSectionHr.className = 'section-divider'; container.appendChild(phSectionHr);
+      const phLabel = document.createElement('div');
+      phLabel.style.cssText = 'font-size:var(--fs-xs);font-weight:bold;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:16px';
+      phLabel.textContent = 'Phases';
+      container.appendChild(phLabel);
+
+      phases.forEach((phase, i) => {
+        if (i > 0) { const hr = document.createElement('hr'); hr.className = 'section-divider'; container.appendChild(hr); }
+
+        const phHeader = document.createElement('div');
+        phHeader.className = 'review-field';
+        phHeader.innerHTML = `<div class="review-field-label" style="color:var(--project-color)">${escHtml(phase.name)}${phase.hard ? '<span style="font-size:10px;background:var(--project-dim);color:var(--project-color);border:1px solid var(--project-border);border-radius:10px;padding:1px 7px;margin-left:6px;font-weight:bold">Hard gate</span>' : ''}</div>`;
+        container.appendChild(phHeader);
+
+        const phDescDiv = document.createElement('div');
+        phDescDiv.className = 'review-field';
+        const ta = document.createElement('textarea');
+        ta.style.cssText = 'display:block;width:100%;min-height:96px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 13px;color:var(--text);font-family:Arial,sans-serif;font-size:1rem;line-height:1.6;resize:vertical;outline:none;';
+        ta.value = (draft.phase_descriptions || [])[i] || '';
+        const idx = i;
+        ta.oninput = () => {
+          if (!state.claudeDraft.phase_descriptions) state.claudeDraft.phase_descriptions = [];
+          state.claudeDraft.phase_descriptions[idx] = ta.value;
+        };
+        ta.onfocus = () => { ta.style.borderColor = 'var(--project-color)'; ta.style.boxShadow = '0 0 0 3px var(--project-dim)'; };
+        ta.onblur = () => { ta.style.borderColor = 'var(--border)'; ta.style.boxShadow = 'none'; };
+        phDescDiv.appendChild(ta);
+        container.appendChild(phDescDiv);
+      });
+    }
   } else {
     addField('Project', '_', state.taskProjectName, false);
     addField('Milestone', '_', state.taskMilestoneName, false);
@@ -586,8 +740,9 @@ function buildReviewUI() {
     if (state.taskDue) addField('Due Date', '_', state.taskDue, false);
   }
 
-  const submitClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support' }[state.route] || '';
+  const submitClass = { lo: ' btn-lo', task: ' btn-task', support: ' btn-support', project: ' btn-project' }[state.route] || '';
   document.getElementById('submitBtn').className = 'btn-primary' + submitClass;
+  document.getElementById('submitBtn').textContent = isProject ? 'Create Project ✓' : 'Create Ticket ✓';
 }
 
 async function submitTicket() {
@@ -596,7 +751,72 @@ async function submitTicket() {
   const draft = state.claudeDraft;
   const isLO = state.route === 'lo';
   const isSupport = state.route === 'support';
+  const isProject = state.route === 'project';
   const dest = BASES[state.route];
+
+  if (isProject) {
+    try {
+      btn.textContent = 'Creating project...';
+      let projectDesc = draft.description || '';
+      if (state.refinementNotes.length > 0) {
+        projectDesc += '\n\nOpen Questions for Discovery:\n' + state.refinementNotes.map(n => '- ' + n).join('\n');
+      }
+      const projectFields = {
+        'Project Name': draft.name || state.projectName || 'Untitled Project',
+        'Project Description': projectDesc,
+        'Project Status': 'Discovery',
+        'Priority': state.projectPriority || 'Medium',
+      };
+      if (state.projectType) projectFields['Project Type'] = state.projectType;
+      if (state.projectProgram) projectFields['Program/Initiative'] = state.projectProgram;
+      if (state.projectOwner) projectFields['Project Owner'] = [state.projectOwner];
+      if (state.projectStartDate) projectFields['Start Date'] = state.projectStartDate;
+      if (state.projectEndDate) projectFields['Target End Date'] = state.projectEndDate;
+
+      const projRes = await fetch('/api/airtable', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseId: dest.baseId, tableId: dest.tableId, fields: projectFields })
+      });
+      const projData = await projRes.json();
+      if (!projRes.ok) throw new Error(projData.error?.message || JSON.stringify(projData.error) || 'Project create failed');
+
+      const phases = PHASE_TEMPLATES[state.projectTemplate] || [];
+      const phaseDescs = draft.phase_descriptions || [];
+      let phaseFailures = 0;
+      for (let i = 0; i < phases.length; i++) {
+        const phaseNum = phases[i].name.match(/Phase \d/)?.[0] || `Phase ${i}`;
+        btn.textContent = `Creating ${phaseNum}...`;
+        try {
+          const phaseRes = await fetch('/api/airtable', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              baseId: PROJECT_BASE, tableId: MILESTONES_TABLE,
+              fields: {
+                'Phase': phases[i].name,
+                'Projects': [projData.id],
+                'Status': 'Not Started',
+                'Description': phaseDescs[i] || '',
+              }
+            })
+          });
+          if (!phaseRes.ok) phaseFailures++;
+        } catch (_) { phaseFailures++; }
+      }
+
+      const phaseSuffix = phaseFailures === 0
+        ? ` ${phases.length} phases created.`
+        : ` ${phases.length - phaseFailures} of ${phases.length} phases created — ${phaseFailures} failed.`;
+      document.querySelector('.success-title').textContent = 'Project created';
+      document.getElementById('successSub').textContent = 'Added to the Project Dashboard.' + phaseSuffix;
+      document.getElementById('successId').textContent = 'Record ID: ' + projData.id;
+      document.getElementById('successLink').href = `https://airtable.com/${dest.baseId}/${dest.tableId}/${projData.id}`;
+      showStep('success');
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Create Project ✓';
+      alert('Submission failed: ' + err.message);
+    }
+    return;
+  }
 
   // Support's Description is plain text; LO/Task use markdown (richText field).
   let finalDescription = draft.description;
@@ -653,7 +873,7 @@ async function submitTicket() {
     const base = isLO
       ? 'Added to LO Work Items in Project Dashboard.'
       : isSupport
-        ? 'Filed in the DigOps Support Desk.'
+        ? 'Filed in Support & System Status.'
         : `Added to Task Tracker under "${state.taskMilestoneName}".`;
     document.getElementById('successSub').textContent = base + attachmentSummary(attachFailures);
     document.getElementById('successId').textContent = 'Record ID: ' + data.id;
@@ -784,17 +1004,24 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', projectName: '', projectType: '', projectProgram: '', projectPriority: null, projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
   document.querySelectorAll('#supportAffectedSystems .sys-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('sel-project'));
+  const preview = document.getElementById('templatePhasesPreview');
+  if (preview) { preview.classList.add('hidden'); preview.innerHTML = ''; }
   renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
   document.getElementById('routeSupport').className = 'route-card';
+  document.getElementById('routeProject').className = 'route-card';
   document.getElementById('step1Next').disabled = true;
+  document.getElementById('step1Next').className = 'btn-primary';
+  document.getElementById('submitBtn').textContent = 'Create Ticket ✓';
+  document.querySelector('.success-title').textContent = 'Ticket created';
   document.getElementById('workDescription').value = '';
   document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  ['loAssignee','loReporter','loDate','taskProject','taskEffort','taskAssignee','taskReporter','taskStart','taskDue','supportCategory','supportReporter','supportAssignee'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['loAssignee','loReporter','loDate','taskProject','taskEffort','taskAssignee','taskReporter','taskStart','taskDue','supportCategory','supportReporter','supportAssignee','projectNameInput','projectType','projectProgram','projectOwner','projectStart','projectEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);
