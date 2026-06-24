@@ -107,7 +107,11 @@ async function loadAssignees() {
     document.getElementById('taskAssignee'),
     document.getElementById('supportAssignee'),
   ];
-  const reporterSelect = document.getElementById('supportReporter');
+  const reporterSelects = [
+    document.getElementById('loReporter'),
+    document.getElementById('taskReporter'),
+    document.getElementById('supportReporter'),
+  ];
   try {
     const members = await airtableList(PROJECT_BASE, TEAM_TABLE, {
       fields: ['Name', 'User'],
@@ -117,12 +121,12 @@ async function loadAssignees() {
     TEAM_NAMES = {};
     TEAM_USERS = {};
     assigneeSelects.forEach(sel => { if (sel) sel.innerHTML = '<option value="">— unassigned —</option>'; });
-    if (reporterSelect) reporterSelect.innerHTML = '<option value="">— select reporter —</option>';
+    reporterSelects.forEach(sel => { if (sel) sel.innerHTML = '<option value="">— select reporter —</option>'; });
     members.forEach(m => {
       const name = m.fields.Name || '(unnamed)';
       TEAM_NAMES[m.id] = name;
       if (m.fields.User && m.fields.User.id) TEAM_USERS[m.id] = m.fields.User;
-      [...assigneeSelects, reporterSelect].forEach(sel => {
+      [...assigneeSelects, ...reporterSelects].forEach(sel => {
         if (!sel) return;
         const o = document.createElement('option');
         o.value = m.id;
@@ -163,9 +167,9 @@ async function loadSupportCategories() {
 
 let state = {
   route: null,
-  loType: null, loPriority: null, loDate: '', loAssignee: '',
+  loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '',
   taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '',
-  taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '',
+  taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '',
   supportPriority: null, supportCategory: '', supportCategoryName: '',
   supportReporter: '', supportReporterName: '', supportAssignee: '',
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
@@ -227,6 +231,9 @@ function goToStep3fresh() {
     state.loDate = document.getElementById('loDate').value;
     state.loAssignee = document.getElementById('loAssignee').value;
     if (state.loAssignee && !state.loDate) { alert('Due date is required when an assignee is selected.'); return; }
+    const loRepSel = document.getElementById('loReporter');
+    state.loReporter = loRepSel.value;
+    state.loReporterName = loRepSel.value ? loRepSel.options[loRepSel.selectedIndex].text : '';
   } else if (state.route === 'support') {
     if (!state.supportPriority) { alert('Please select a priority.'); return; }
     const catSel = document.getElementById('supportCategory');
@@ -249,6 +256,9 @@ function goToStep3fresh() {
     state.taskMilestoneName = document.getElementById('taskMilestone').options[document.getElementById('taskMilestone').selectedIndex].text;
     state.taskEffort = document.getElementById('taskEffort').value;
     state.taskAssignee = document.getElementById('taskAssignee').value;
+    const taskRepSel = document.getElementById('taskReporter');
+    state.taskReporter = taskRepSel.value;
+    state.taskReporterName = taskRepSel.value ? taskRepSel.options[taskRepSel.selectedIndex].text : '';
     state.taskStart = document.getElementById('taskStart').value;
     state.taskDue = document.getElementById('taskDue').value;
     if (state.taskAssignee && !state.taskDue) { alert('Due date is required when an assignee is selected.'); return; }
@@ -571,6 +581,7 @@ function buildReviewUI() {
   if (isLO) {
     addField('Type', 'type', state.loType, false);
     addField('Priority', 'priority', state.loPriority, false);
+    if (state.loReporter) addField('Reporter', '_', state.loReporterName, false);
     if (state.loAssignee) addField('Assignee', '_', TEAM_NAMES[state.loAssignee], false);
     if (state.loDate) addField('Due Date', '_', state.loDate, false);
   } else if (isSupport) {
@@ -585,6 +596,7 @@ function buildReviewUI() {
     addField('Task Type', '_', state.taskType, false);
     addField('Priority', '_', state.taskPriority, false);
     if (state.taskEffort) addField('Effort', '_', state.taskEffort, false);
+    if (state.taskReporter) addField('Reporter', '_', state.taskReporterName, false);
     if (state.taskAssignee) addField('Assignee', '_', TEAM_NAMES[state.taskAssignee], false);
     if (state.taskStart) addField('Start Date', '_', state.taskStart, false);
     if (state.taskDue) addField('Due Date', '_', state.taskDue, false);
@@ -615,6 +627,7 @@ async function submitTicket() {
     fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
+    if (state.loReporterName) fields['Reporter'] = state.loReporterName;
   } else if (isSupport) {
     fields = { 'Title': draft.name || 'Untitled', 'Description': finalDescription || '', 'Priority': state.supportPriority || 'Medium', 'Status': 'Open' };
     if (state.supportCategory) fields['Category'] = [state.supportCategory];
@@ -627,6 +640,7 @@ async function submitTicket() {
     fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
     if (state.taskAssignee) fields['Assignee'] = [state.taskAssignee];
+    if (state.taskReporterName) fields['Reporter'] = state.taskReporterName;
     if (state.taskStart) fields['Start date'] = state.taskStart;
     if (state.taskDue) fields['Due Date'] = state.taskDue;
   }
@@ -775,7 +789,7 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportCategoryName: '', supportReporter: '', supportReporterName: '', supportAssignee: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
   renderAttachments();
   document.getElementById('routeLO').className = 'route-card';
   document.getElementById('routeTask').className = 'route-card';
@@ -784,7 +798,7 @@ function startOver() {
   document.getElementById('workDescription').value = '';
   document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected-lo','selected-task'));
   document.querySelectorAll('.priority-chip').forEach(c => c.className = 'priority-chip');
-  ['loAssignee','loDate','taskProject','taskEffort','taskAssignee','taskStart','taskDue','supportCategory','supportReporter','supportAssignee'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['loAssignee','loReporter','loDate','taskProject','taskEffort','taskAssignee','taskReporter','taskStart','taskDue','supportCategory','supportReporter','supportAssignee'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);
