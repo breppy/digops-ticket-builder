@@ -547,7 +547,9 @@ Return exactly:
     : state.route === 'project' ? projectSystemPrompt
     : workSystemPrompt;
 
-  const payload = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: systemPrompt, messages: [{ role: 'user', content: state.description }] });
+  // Project needs more tokens: one project description + four phase descriptions in one pass.
+  const maxTokens = state.route === 'project' ? 4000 : 1500;
+  const payload = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: state.description }] });
   const maxAttempts = 3;
   try {
     let data, res;
@@ -568,6 +570,7 @@ Return exactly:
     let text = '';
     for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
+    if (!text.startsWith('{')) throw new Error('Claude returned an unexpected response. Your description may be too short — try adding more detail and retry.');
     state.claudeDraft = JSON.parse(text);
     state.refinementNotes = state.claudeDraft.notes_for_refinement || [];
     output.textContent = '✓ Draft complete — reviewing with you next.';
