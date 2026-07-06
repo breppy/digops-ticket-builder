@@ -178,6 +178,7 @@ let state = {
   supportReporter: '', supportReporterName: '', supportAssignee: '',
   projectName: '', projectType: '', projectProgram: '', projectPriority: null,
   projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '',
+  genProjectId: '', genProjectName: '', genPhase0Id: '', genPhase0Name: '', genTasks: [],
   description: '', claudeDraft: null, refinementNotes: [], attachments: [],
 };
 
@@ -190,7 +191,9 @@ function updateProgress(step) {
 
 function showStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-  const el = n === 'success' ? document.getElementById('stepSuccess') : document.getElementById('step' + n);
+  const el = n === 'success' ? document.getElementById('stepSuccess')
+    : typeof n === 'number' ? document.getElementById('step' + n)
+    : document.getElementById(n);
   if (el) el.classList.add('active');
   if (typeof n === 'number') updateProgress(n);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -781,6 +784,7 @@ async function submitTicket() {
 
       const phases = PHASE_TEMPLATES[state.projectTemplate] || [];
       const phaseDescs = draft.phase_descriptions || [];
+      state.genPhase0Id = '';
       let phaseFailures = 0;
       for (let i = 0; i < phases.length; i++) {
         const phaseNum = phases[i].name.match(/Phase \d/)?.[0] || `Phase ${i}`;
@@ -798,9 +802,17 @@ async function submitTicket() {
               }
             })
           });
-          if (!phaseRes.ok) phaseFailures++;
+          if (!phaseRes.ok) {
+            phaseFailures++;
+          } else if (i === 0) {
+            try { const pd = await phaseRes.json(); if (pd.id) state.genPhase0Id = pd.id; } catch (_) {}
+          }
         } catch (_) { phaseFailures++; }
       }
+      state.genProjectId = projData.id;
+      state.genProjectName = draft.name || state.projectName || 'Untitled Project';
+      state.genPhase0Name = phases[0]?.name || 'Phase 0';
+      state.genTasks = [];
 
       const phaseSuffix = phaseFailures === 0
         ? ` ${phases.length} phases created.`
@@ -809,6 +821,9 @@ async function submitTicket() {
       document.getElementById('successSub').textContent = 'Added to the Project Dashboard.' + phaseSuffix;
       document.getElementById('successId').textContent = 'Record ID: ' + projData.id;
       document.getElementById('successLink').href = `https://airtable.com/${dest.baseId}/${dest.tableId}/${projData.id}`;
+      document.getElementById('successLink').textContent = 'Open in Airtable ↗';
+      const taskGenBtn = document.getElementById('taskGenBtn');
+      if (taskGenBtn) taskGenBtn.classList.toggle('hidden', !state.genPhase0Id);
       showStep('success');
     } catch (err) {
       btn.disabled = false; btn.textContent = 'Create Project ✓';
@@ -851,7 +866,7 @@ async function submitTicket() {
       fields['Owner/Assignee'] = [{ id: TEAM_USERS[state.supportAssignee].id }];
     }
   } else {
-    fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Related Milestone': [state.taskMilestone] };
+    fields = { 'Task Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Task Type': state.taskType || 'Work Ticket', 'Priority': state.taskPriority || 'Medium', 'Status': 'Not Started', 'Phase': [state.taskMilestone] };
     if (state.taskEffort) fields['Effort Size'] = state.taskEffort;
     if (state.taskAssignee) fields['Assignee'] = [state.taskAssignee];
     if (state.taskReporterName) fields['Reporter'] = state.taskReporterName;
@@ -1003,7 +1018,11 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
-  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', projectName: '', projectType: '', projectProgram: '', projectPriority: null, projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '', description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', projectName: '', projectType: '', projectProgram: '', projectPriority: null, projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '', genProjectId: '', genProjectName: '', genPhase0Id: '', genPhase0Name: '', genTasks: [], description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
+  const taskGenBtn = document.getElementById('taskGenBtn');
+  if (taskGenBtn) taskGenBtn.classList.add('hidden');
+  const sl = document.getElementById('successLink');
+  if (sl) sl.textContent = 'Open in Airtable ↗';
   document.querySelectorAll('#supportAffectedSystems .sys-chip').forEach(c => c.classList.remove('active'));
   document.querySelectorAll('.template-card').forEach(c => c.classList.remove('sel-project'));
   const preview = document.getElementById('templatePhasesPreview');
@@ -1024,6 +1043,205 @@ function startOver() {
   document.getElementById('taskMilestone').innerHTML = '<option value="">— select a project first —</option>';
   document.getElementById('taskMilestone').disabled = true;
   showStep(1);
+}
+
+function startTaskGenerator() {
+  const inputEl = document.getElementById('tgInput');
+  if (inputEl) inputEl.value = state.description || '';
+  const chip = document.getElementById('tgChip');
+  if (chip) chip.textContent = `🗂️ ${state.genProjectName} — Phase 0`;
+  const sub = document.getElementById('tgSub');
+  if (sub) sub.textContent = `Will draft discovery tasks for "${state.genPhase0Name}".`;
+  showStep('stepTaskGen1');
+}
+
+async function runTaskGenerator() {
+  const inputEl = document.getElementById('tgInput');
+  const input = inputEl ? inputEl.value.trim() : '';
+  if (!input) { alert('Please add some context about the project.'); return; }
+
+  showStep('stepTaskGen2');
+  const dot = document.getElementById('tgDot');
+  const output = document.getElementById('tgOutput');
+  const statusEl = document.getElementById('tgStatus');
+  const btnRow = document.getElementById('tgBtnRow');
+  dot.className = 'claude-dot';
+  btnRow.style.display = 'none';
+  output.textContent = 'Analyzing project scope...';
+
+  const systemPrompt = `You are a project task generator for the DevISO digital operations team at Memorial Sloan Kettering Cancer Center.
+
+Project: "${state.genProjectName}"
+Phase: ${state.genPhase0Name}
+
+This is Phase 0 — a HARD GATE. No work in later phases begins until all Phase 0 tasks are complete and approved by stakeholders. Generate tasks covering the full discovery and decision-making process needed to unlock the project.
+
+CRITICAL RULES:
+1. Generate 4–8 tasks. Quality over quantity — include only what genuinely needs to happen in this phase.
+2. Return ONLY valid JSON — no markdown fences, no explanation, no preamble.
+3. Task descriptions use markdown. Open with 1 sentence of plain prose (no header label). Include **Acceptance criteria** as a checklist only when the task has a concrete, verifiable deliverable.
+4. Types: "Spike" (research/investigation/analysis with a defined output), "Work Ticket" (concrete deliverable)
+5. Priorities: High = must happen first; Medium = supporting work; Low = nice-to-have.
+
+Return exactly:
+{
+  "tasks": [
+    {
+      "name": "concise task name, max 60 chars",
+      "description": "markdown description",
+      "type": "Spike",
+      "priority": "High"
+    }
+  ]
+}`;
+
+  const payload = JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, system: systemPrompt, messages: [{ role: 'user', content: input }] });
+  const maxAttempts = 3;
+  try {
+    let data, res;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      statusEl.textContent = attempt === 1 ? 'claude-sonnet-4-6 · generating' : `claude-sonnet-4-6 · retrying (${attempt}/${maxAttempts})…`;
+      res = await fetch('/api/claude', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload });
+      const rawText = await res.text();
+      try { data = JSON.parse(rawText); }
+      catch (_) { throw new Error('Server error (non-JSON response). Check Vercel logs.'); }
+      const isOverloaded = res.status === 529 || data.error?.type === 'overloaded_error';
+      if (isOverloaded && attempt < maxAttempts) { await new Promise(r => setTimeout(r, attempt * 2000)); continue; }
+      break;
+    }
+    if (!res.ok || !Array.isArray(data.content)) {
+      throw new Error(data.error?.message || JSON.stringify(data.error || data) || 'Claude API error');
+    }
+    let text = '';
+    for (const block of data.content) { if (block.type === 'text') text += block.text; }
+    text = text.replace(/```json|```/g, '').trim();
+    if (!text.startsWith('{')) throw new Error('Claude returned unexpected content. Add more detail to the project brief and retry.');
+    const parsed = JSON.parse(text);
+    state.genTasks = (parsed.tasks || []).map(t => ({ ...t, _id: Math.random() }));
+    output.textContent = `✓ ${state.genTasks.length} tasks drafted — review and submit.`;
+    dot.className = 'claude-dot done';
+    statusEl.textContent = 'claude-sonnet-4-6 · done';
+    btnRow.style.display = 'flex';
+  } catch (err) {
+    output.textContent = 'Error: ' + err.message + '\n\nCheck your network or try again.';
+    dot.className = 'claude-dot';
+    statusEl.textContent = 'claude-sonnet-4-6 · error';
+    btnRow.style.display = 'flex';
+  }
+}
+
+function buildTaskGenReviewUI() {
+  const container = document.getElementById('tgTaskList');
+  container.innerHTML = '';
+  const chip = document.getElementById('tgReviewChip');
+  if (chip) chip.textContent = `🗂️ ${state.genProjectName} — ${state.genPhase0Name}`;
+
+  state.genTasks.forEach((task, i) => {
+    const taskId = task._id;
+    const card = document.createElement('div');
+    card.className = 'tg-card';
+
+    const header = document.createElement('div');
+    header.className = 'tg-card-header';
+    const numEl = document.createElement('span');
+    numEl.className = 'tg-card-num';
+    numEl.textContent = 'Task ' + (i + 1);
+    header.appendChild(numEl);
+    const delBtn = document.createElement('button');
+    delBtn.className = 'tg-remove';
+    delBtn.type = 'button';
+    delBtn.textContent = '✕ Remove';
+    delBtn.onclick = () => {
+      const idx = state.genTasks.findIndex(t => t._id === taskId);
+      if (idx >= 0) state.genTasks.splice(idx, 1);
+      buildTaskGenReviewUI();
+    };
+    header.appendChild(delBtn);
+    card.appendChild(header);
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'tg-name';
+    nameInput.value = task.name;
+    nameInput.oninput = () => {
+      const idx = state.genTasks.findIndex(t => t._id === taskId);
+      if (idx >= 0) state.genTasks[idx].name = nameInput.value;
+    };
+    card.appendChild(nameInput);
+
+    const metaRow = document.createElement('div');
+    metaRow.className = 'tg-meta';
+    const typeBadge = document.createElement('span');
+    typeBadge.className = 'tg-badge tg-type';
+    typeBadge.textContent = task.type;
+    metaRow.appendChild(typeBadge);
+    const priBadge = document.createElement('span');
+    priBadge.className = `tg-badge p-${(task.priority || '').toLowerCase()}`;
+    priBadge.textContent = task.priority;
+    metaRow.appendChild(priBadge);
+    card.appendChild(metaRow);
+
+    const descTa = document.createElement('textarea');
+    descTa.className = 'tg-desc';
+    descTa.value = task.description;
+    descTa.oninput = () => {
+      const idx = state.genTasks.findIndex(t => t._id === taskId);
+      if (idx >= 0) state.genTasks[idx].description = descTa.value;
+    };
+    card.appendChild(descTa);
+
+    container.appendChild(card);
+  });
+
+  const btn = document.getElementById('tgSubmitBtn');
+  if (btn) btn.textContent = `Create ${state.genTasks.length} task${state.genTasks.length !== 1 ? 's' : ''} ✓`;
+}
+
+function goToTaskGenReview() {
+  if (!state.genTasks.length) return;
+  buildTaskGenReviewUI();
+  showStep('stepTaskGen3');
+}
+
+async function submitTasks() {
+  const btn = document.getElementById('tgSubmitBtn');
+  btn.disabled = true;
+  const tasks = state.genTasks;
+  const total = tasks.length;
+  let failures = 0;
+
+  for (let i = 0; i < total; i++) {
+    const task = tasks[i];
+    btn.textContent = `Creating task ${i + 1} of ${total}...`;
+    try {
+      const res = await fetch('/api/airtable', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          baseId: PROJECT_BASE, tableId: BASES.task.tableId,
+          fields: {
+            'Task Name': task.name,
+            'Description': task.description,
+            'Task Type': task.type,
+            'Priority': task.priority,
+            'Status': 'Not Started',
+            'Phase': [state.genPhase0Id],
+          }
+        })
+      });
+      if (!res.ok) failures++;
+    } catch (_) { failures++; }
+  }
+
+  const okCount = total - failures;
+  document.querySelector('.success-title').textContent = 'Tasks created';
+  document.getElementById('successSub').textContent = failures === 0
+    ? `${okCount} Phase 0 task${okCount !== 1 ? 's' : ''} added to Task Tracker.`
+    : `${okCount} of ${total} tasks created — ${failures} failed.`;
+  document.getElementById('successId').textContent = `Project: ${state.genProjectName}`;
+  document.getElementById('successLink').href = `https://airtable.com/${PROJECT_BASE}/${BASES.task.tableId}`;
+  document.getElementById('successLink').textContent = 'Open Task Tracker ↗';
+  document.getElementById('taskGenBtn').classList.add('hidden');
+  showStep('success');
 }
 
 updateProgress(1);

@@ -434,9 +434,70 @@
       <div class="success-sub" id="successSub">Your ticket has been added to Airtable.</div>
       <div class="success-id" id="successId"></div>
       <div class="success-actions">
-        <a id="successLink" class="btn-primary" target="_blank" rel="noopener">Open ticket in Airtable ↗</a>
-        <button class="btn-back" onclick="startOver()">Write another ticket</button>
+        <a id="successLink" class="btn-primary" target="_blank" rel="noopener">Open in Airtable ↗</a>
+        <button class="btn-project hidden" id="taskGenBtn" onclick="startTaskGenerator()">Generate Phase 0 tasks →</button>
+        <button class="btn-back" onclick="startOver()">← Start over</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- TASK GENERATOR — Step 1: Input -->
+  <div class="step" id="stepTaskGen1">
+    <div class="step-header">
+      <div class="step-label">Task Generator</div>
+      <div class="step-title" id="tgTitle">Phase 0 tasks</div>
+      <div class="step-sub" id="tgSub">Claude will draft discovery tasks linked to this phase.</div>
+    </div>
+    <div class="destination-chip project" id="tgChip"></div>
+    <div class="card">
+      <div class="card-title">Project context</div>
+      <div class="field-group" style="margin-bottom:0">
+        <textarea id="tgInput" placeholder="What is this project about? What are the goals, constraints, or anything the team already knows?"></textarea>
+        <div class="hint" style="margin-top:6px">Pre-filled from your project brief. Add anything new that came up during scoping.</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="showStep('success')">← Back to project</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary btn-project" onclick="runTaskGenerator()">Draft tasks with Claude →</button>
+    </div>
+  </div>
+
+  <!-- TASK GENERATOR — Step 2: Claude processing -->
+  <div class="step" id="stepTaskGen2">
+    <div class="step-header">
+      <div class="step-label">Task Generator</div>
+      <div class="step-title">Drafting tasks</div>
+      <div class="step-sub">One pass — then you review and submit.</div>
+    </div>
+    <div class="claude-card">
+      <div class="claude-header">
+        <div class="claude-dot" id="tgDot"></div>
+        <span id="tgStatus">claude-sonnet-4-6 · generating</span>
+      </div>
+      <div class="claude-body" id="tgOutput">Analyzing project scope...</div>
+    </div>
+    <div class="btn-row" id="tgBtnRow" style="display:none">
+      <button class="btn-back" onclick="showStep('stepTaskGen1')">← Revise context</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary btn-project" onclick="goToTaskGenReview()">Review tasks →</button>
+    </div>
+  </div>
+
+  <!-- TASK GENERATOR — Step 3: Review & Submit -->
+  <div class="step" id="stepTaskGen3">
+    <div class="step-header">
+      <div class="step-label">Task Generator</div>
+      <div class="step-title">Review tasks</div>
+      <div class="step-sub">Edit names and descriptions before creating. Remove any that don't apply.</div>
+    </div>
+    <div class="destination-chip project" id="tgReviewChip"></div>
+    <div id="tgTaskList"></div>
+    <div class="btn-row">
+      <button class="btn-back" onclick="showStep('stepTaskGen2')">← Back</button>
+      <div style="flex:1"></div>
+      <button class="btn-primary btn-project" id="tgSubmitBtn" onclick="submitTasks()">Create tasks ✓</button>
     </div>
   </div>
 
