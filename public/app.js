@@ -842,7 +842,7 @@ async function submitTicket() {
 
   let fields;
   if (isLO) {
-    fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
+    fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
     if (state.loReporterName) fields['Reporter'] = state.loReporterName;
