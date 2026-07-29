@@ -21,7 +21,7 @@ export default async function handler(req) {
     });
   }
 
-  const apiKey = process.env.VITE_AT_TOKEN;
+  const apiKey = process.env.DIGOPS_AT_TOKEN || process.env.VITE_AT_TOKEN;
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Airtable token not configured on server' }), {
       status: 500,
