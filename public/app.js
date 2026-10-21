@@ -569,8 +569,9 @@ Return exactly:
     let text = '';
     for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
-    if (!text.startsWith('{')) throw new Error('Claude returned an unexpected response. Your description may be too short — try adding more detail and retry.');
-    state.claudeDraft = JSON.parse(text);
+    const s1 = text.indexOf('{'), e1 = text.lastIndexOf('}');
+    if (s1 === -1 || e1 === -1) throw new Error('Claude returned an unexpected response. Your description may be too short — try adding more detail and retry.');
+    state.claudeDraft = JSON.parse(text.slice(s1, e1 + 1));
     state.refinementNotes = state.claudeDraft.notes_for_refinement || [];
     output.textContent = '✓ Draft complete — reviewing with you next.';
     dot.className = 'claude-dot done';
@@ -842,7 +843,7 @@ async function submitTicket() {
 
   let fields;
   if (isLO) {
-    fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': state.loAssignee ? 'In Progress' : 'Backlog' };
+    fields = { 'Name': draft.name || 'Untitled', 'Description': finalDescription || '', 'Type': state.loType || 'Other', 'Priority': state.loPriority || 'Medium', 'Status': 'Backlog' };
     if (state.loDate) fields['Due Date'] = state.loDate;
     if (state.loAssignee) fields['Assignee'] = [state.loAssignee];
     if (state.loReporterName) fields['Reporter'] = state.loReporterName;
@@ -1115,8 +1116,9 @@ Return exactly:
     let text = '';
     for (const block of data.content) { if (block.type === 'text') text += block.text; }
     text = text.replace(/```json|```/g, '').trim();
-    if (!text.startsWith('{')) throw new Error('Claude returned unexpected content. Add more detail to the project brief and retry.');
-    const parsed = JSON.parse(text);
+    const s2 = text.indexOf('{'), e2 = text.lastIndexOf('}');
+    if (s2 === -1 || e2 === -1) throw new Error('Claude returned unexpected content. Add more detail to the project brief and retry.');
+    const parsed = JSON.parse(text.slice(s2, e2 + 1));
     state.genTasks = (parsed.tasks || []).map(t => ({ ...t, _id: Math.random() }));
     output.textContent = `✓ ${state.genTasks.length} tasks drafted — review and submit.`;
     dot.className = 'claude-dot done';
