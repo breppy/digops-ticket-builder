@@ -571,7 +571,7 @@ Return exactly:
     text = text.replace(/```json|```/g, '').trim();
     const s1 = text.indexOf('{'), e1 = text.lastIndexOf('}');
     if (s1 === -1 || e1 === -1) throw new Error('Claude returned an unexpected response. Your description may be too short — try adding more detail and retry.');
-    state.claudeDraft = JSON.parse(text.slice(s1, e1 + 1));
+    state.claudeDraft = JSON.parse(repairJson(text.slice(s1, e1 + 1)));
     state.refinementNotes = state.claudeDraft.notes_for_refinement || [];
     output.textContent = '✓ Draft complete — reviewing with you next.';
     dot.className = 'claude-dot done';
@@ -1017,6 +1017,25 @@ function removeAttachment(id) {
 
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// Escapes literal control characters (newlines, tabs, carriage returns) that
+// appear inside JSON string values — the most common way LLMs produce invalid JSON.
+function repairJson(text) {
+  let out = '', inStr = false, esc = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (esc) { out += c; esc = false; continue; }
+    if (c === '\\' && inStr) { out += c; esc = true; continue; }
+    if (c === '"') { out += c; inStr = !inStr; continue; }
+    if (inStr) {
+      if (c === '\n') { out += '\\n'; continue; }
+      if (c === '\r') { out += '\\r'; continue; }
+      if (c === '\t') { out += '\\t'; continue; }
+    }
+    out += c;
+  }
+  return out;
+}
+
 function startOver() {
   state.attachments.forEach(a => URL.revokeObjectURL(a.url));
   state = { route: null, loType: null, loPriority: null, loDate: '', loAssignee: '', loReporter: '', loReporterName: '', taskProject: '', taskProjectName: '', taskMilestone: '', taskMilestoneName: '', taskType: null, taskPriority: null, taskEffort: '', taskAssignee: '', taskReporter: '', taskReporterName: '', taskStart: '', taskDue: '', supportPriority: null, supportCategory: '', supportAffectedSystems: [], supportReporter: '', supportReporterName: '', supportAssignee: '', projectName: '', projectType: '', projectProgram: '', projectPriority: null, projectOwner: '', projectOwnerName: '', projectStartDate: '', projectEndDate: '', projectTemplate: '', genProjectId: '', genProjectName: '', genPhase0Id: '', genPhase0Name: '', genTasks: [], description: '', claudeDraft: null, refinementNotes: [], attachments: [] };
@@ -1118,7 +1137,7 @@ Return exactly:
     text = text.replace(/```json|```/g, '').trim();
     const s2 = text.indexOf('{'), e2 = text.lastIndexOf('}');
     if (s2 === -1 || e2 === -1) throw new Error('Claude returned unexpected content. Add more detail to the project brief and retry.');
-    const parsed = JSON.parse(text.slice(s2, e2 + 1));
+    const parsed = JSON.parse(repairJson(text.slice(s2, e2 + 1)));
     state.genTasks = (parsed.tasks || []).map(t => ({ ...t, _id: Math.random() }));
     output.textContent = `✓ ${state.genTasks.length} tasks drafted — review and submit.`;
     dot.className = 'claude-dot done';
